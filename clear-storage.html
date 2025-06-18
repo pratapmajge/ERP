@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Local Storage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #c82333;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Clear Local Storage</h1>
+        <div class="info">
+            <p><strong>Current localStorage contents:</strong></p>
+            <div id="currentStorage"></div>
+        </div>
+        
+        <button onclick="clearStorage()">Clear All Local Storage</button>
+        <button onclick="clearTokenOnly()">Clear Token Only</button>
+        <button onclick="refreshPage()">Refresh Page</button>
+        
+        <div id="result"></div>
+        
+        <div style="margin-top: 30px;">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click "Clear All Local Storage" to remove all stored data</li>
+                <li>Or click "Clear Token Only" to just remove the authentication token</li>
+                <li>Then go back to your ERP application at <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+                <li>You should now see the login/register forms instead of being redirected to the dashboard</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function showCurrentStorage() {
+            const storage = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                storage[key] = localStorage.getItem(key);
+            }
+            document.getElementById('currentStorage').innerHTML = 
+                '<pre>' + JSON.stringify(storage, null, 2) + '</pre>';
+        }
+
+        function clearStorage() {
+            localStorage.clear();
+            document.getElementById('result').innerHTML = 
+                '<p class="success">✅ All localStorage data cleared successfully!</p>';
+            showCurrentStorage();
+        }
+
+        function clearTokenOnly() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            document.getElementById('result').innerHTML = 
+                '<p class="success">✅ Authentication token cleared successfully!</p>';
+            showCurrentStorage();
+        }
+
+        function refreshPage() {
+            location.reload();
+        }
+
+        // Show current storage on page load
+        showCurrentStorage();
+    </script>
+</body>
+</html> 
