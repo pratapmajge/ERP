@@ -22,6 +22,7 @@ import {
   MenuItem,
   Card,
   CardContent,
+  Divider,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -30,6 +31,7 @@ import {
   AttachMoney as MoneyIcon,
   Receipt as ReceiptIcon,
   AccountBalance as BankIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -148,12 +150,14 @@ const Payroll = () => {
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
   });
+  const [searchTerm, setSearchTerm] = useState('');
   const theme = useTheme();
   const user = getUser();
   const isEmployee = user?.role === 'employee';
 
   useEffect(() => {
     if (isEmployee) {
+      console.log('[Payroll] Employee user._id:', user?._id);
       fetchEmployeePayroll();
     } else {
       fetchPayroll();
@@ -182,15 +186,22 @@ const Payroll = () => {
       const now = new Date();
       const month = now.getMonth() + 1;
       const year = now.getFullYear();
-      const response = await fetch(`http://localhost:5001/api/payroll/employee/${user._id}?month=${month}&year=${year}`, {
+      const employeeId = user.employeeId || user._id;
+      const apiUrl = `http://localhost:5001/api/payroll/employee/${employeeId}?month=${month}&year=${year}`;
+      console.log('[Payroll][DEBUG] employeeId:', employeeId);
+      console.log('[Payroll][DEBUG] API URL:', apiUrl);
+      const response = await fetch(apiUrl, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
+        console.log('[Payroll][DEBUG] API response:', data);
         setPayroll(data);
+      } else {
+        console.log('[Payroll][DEBUG] API error:', response.status);
       }
     } catch (error) {
-      console.error('Error fetching employee payroll:', error);
+      console.error('[Payroll][DEBUG] Error fetching employee payroll:', error);
     }
   };
 
@@ -312,57 +323,90 @@ const Payroll = () => {
     .filter((record) => record.status === 'Paid')
     .reduce((sum, record) => sum + (record.netSalary || 0), 0);
 
+  // Filter payroll records by employee name or department name
+  const filteredPayroll = payroll.filter(record => {
+    const empName = record.employee?.name || '';
+    const dept = record.employee?.department?.name || '';
+    const term = searchTerm.toLowerCase();
+    return (
+      empName.toLowerCase().includes(term) ||
+      dept.toLowerCase().includes(term)
+    );
+  });
+
   if (isEmployee) {
-    // Employee view: show only current month's payroll status
-    const currentPayroll = payroll[0];
+    // Employee view: show all payroll records (history) as cards
     return (
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-          My Payroll Status (Current Month)
+          My Payroll History
         </Typography>
-        {currentPayroll ? (
+        {payroll.length > 0 ? (
+          <>
+            {/* Desktop/Tablet Grid */}
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Grid container spacing={3} justifyContent="center">
+                {payroll.map((record) => (
+                  <Grid item sm={6} md={4} key={record._id}>
+                    <Card sx={{ borderRadius: 4, boxShadow: 3, p: 2 }}>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <StatusChip status={record.status} />
+                          <Typography variant="h6" sx={{ ml: 2, fontWeight: 'bold' }}>
+                            {record.status}
+                          </Typography>
+                        </Box>
+                        <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'success.main', mb: 1 }}>
+                          ${record.netSalary}
+                        </Typography>
+                        <Divider sx={{ my: 1 }} />
+                        <Typography variant="body2">Basic Salary: <b>${record.basicSalary}</b></Typography>
+                        <Typography variant="body2">Allowances: <b>${record.allowances}</b></Typography>
+                        <Typography variant="body2">Deductions: <b>${record.deductions}</b></Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>Payment Date: {record.paymentDate ? new Date(record.paymentDate).toLocaleDateString() : '-'}</Typography>
+                        <Typography variant="body2">Month: {record.month}</Typography>
+                        <Typography variant="body2">Year: {record.year}</Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+            {/* Mobile Carousel */}
+            <Box sx={{ display: { xs: 'flex', sm: 'none' }, overflowX: 'auto', gap: 2, py: 2 }}>
+              {payroll.map((record) => (
+                <Card key={record._id} sx={{ minWidth: 280, maxWidth: 320, flex: '0 0 auto', borderRadius: 4, boxShadow: 3, p: 2 }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <StatusChip status={record.status} />
+                      <Typography variant="h6" sx={{ ml: 2, fontWeight: 'bold' }}>
+                        {record.status}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'success.main', mb: 1 }}>
+                      ${record.netSalary}
+                    </Typography>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="body2">Basic Salary: <b>${record.basicSalary}</b></Typography>
+                    <Typography variant="body2">Allowances: <b>${record.allowances}</b></Typography>
+                    <Typography variant="body2">Deductions: <b>${record.deductions}</b></Typography>
+                    <Typography variant="body2" sx={{ mt: 1 }}>Payment Date: {record.paymentDate ? new Date(record.paymentDate).toLocaleDateString() : '-'}</Typography>
+                    <Typography variant="body2">Month: {record.month}</Typography>
+                    <Typography variant="body2">Year: {record.year}</Typography>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          </>
+        ) : (
           <Card sx={{ maxWidth: 400, mx: 'auto', p: 2 }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Status: <StatusChip status={currentPayroll.status} />
+              <Typography color="text.secondary" sx={{ fontWeight: 'bold' }}>
+                No payroll record found. Please contact admin if you believe this is an error.
               </Typography>
-              {currentPayroll.status === 'Paid' && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <ReceiptIcon color="success" sx={{ mr: 1 }} />
-                  <Typography color="success.main" sx={{ fontWeight: 'bold' }}>
-                    Your salary for this month has been <b>paid</b> by admin.
-                  </Typography>
-                </Box>
-              )}
-              {currentPayroll.status === 'Pending' && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <MoneyIcon color="warning" sx={{ mr: 1 }} />
-                  <Typography color="warning.main" sx={{ fontWeight: 'bold' }}>
-                    Your salary for this month is <b>pending</b> admin approval/payment.
-                  </Typography>
-                </Box>
-              )}
-              {currentPayroll.status === 'Failed' && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <BankIcon color="error" sx={{ mr: 1 }} />
-                  <Typography color="error.main" sx={{ fontWeight: 'bold' }}>
-                    Payment failed. Please contact admin.
-                  </Typography>
-                </Box>
-              )}
-              <Typography>Net Salary: ${currentPayroll.netSalary}</Typography>
-              <Typography>Basic Salary: ${currentPayroll.basicSalary}</Typography>
-              <Typography>Allowances: ${currentPayroll.allowances}</Typography>
-              <Typography>Deductions: ${currentPayroll.deductions}</Typography>
-              <Typography>Payment Date: {currentPayroll.paymentDate ? new Date(currentPayroll.paymentDate).toLocaleDateString() : '-'}</Typography>
-              <Typography>Month: {currentPayroll.month}</Typography>
-              <Typography>Year: {currentPayroll.year}</Typography>
             </CardContent>
           </Card>
-        ) : (
-          <Typography>No payroll record found for this month.</Typography>
         )}
-        {/* Optionally, add a simple history below */}
       </Box>
     );
   }
@@ -414,6 +458,21 @@ const Payroll = () => {
             </motion.div>
           </Box>
         </Box>
+        <TextField
+          label="Search payrolls"
+          variant="outlined"
+          size="small"
+          fullWidth
+          sx={{ mb: 3, background: 'rgba(102,126,234,0.06)', borderRadius: 2, boxShadow: 1, '& .MuiOutlinedInput-root': { borderRadius: 2, boxShadow: 1, '&:hover': { boxShadow: 3, background: 'rgba(102,126,234,0.10)' }, '&.Mui-focused': { boxShadow: 4, background: 'rgba(102,126,234,0.13)' } } }}
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          autoComplete="off"
+          InputProps={{
+            startAdornment: (
+              <SearchIcon sx={{ color: 'primary.main', mr: 1 }} />
+            ),
+          }}
+        />
       </motion.div>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -463,7 +522,7 @@ const Payroll = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {payroll.map((record) => (
+                {filteredPayroll.map((record) => (
                   <TableRow key={record._id}>
                     <TableCell>{record.employee?.name || '-'}</TableCell>
                     <TableCell>{record.employee?.department?.name || '-'}</TableCell>

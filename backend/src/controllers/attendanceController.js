@@ -17,8 +17,10 @@ exports.createAttendance = async (req, res) => {
 exports.getAllAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.find()
-      .populate('employee', 'name email department')
-      .populate('employee.department', 'name')
+      .populate({
+        path: 'employee',
+        populate: { path: 'department', select: 'name' }
+      })
       .sort({ date: -1 });
     res.status(200).json(attendance);
   } catch (error) {
@@ -30,8 +32,10 @@ exports.getAllAttendance = async (req, res) => {
 exports.getAttendanceById = async (req, res) => {
   try {
     const attendance = await Attendance.findById(req.params.id)
-      .populate('employee', 'name email department')
-      .populate('employee.department', 'name');
+      .populate({
+        path: 'employee',
+        populate: { path: 'department', select: 'name' }
+      });
     if (!attendance) {
       return res.status(404).json({ message: 'Attendance record not found' });
     }
@@ -118,8 +122,10 @@ exports.getAttendanceByEmployee = async (req, res) => {
   try {
     const { employeeId } = req.params;
     const attendance = await Attendance.find({ employee: employeeId })
-      .populate('employee', 'name email department')
-      .populate('employee.department', 'name')
+      .populate({
+        path: 'employee',
+        populate: { path: 'department', select: 'name' }
+      })
       .sort({ date: -1 });
     res.status(200).json(attendance);
   } catch (error) {
@@ -153,6 +159,96 @@ exports.deleteAttendance = async (req, res) => {
       return res.status(404).json({ message: 'Attendance record not found' });
     }
     res.status(200).json({ message: 'Attendance record deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Haversine formula to calculate distance between two lat/lng points in meters
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Radius of the earth in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    0.5 - Math.cos(dLat)/2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    (1 - Math.cos(dLon))/2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+// POST /api/attendance/auto-geolocation
+exports.autoGeolocationAttendance = async (req, res) => {
+  try {
+    const { lat, lng } = req.body;
+    const user = req.user;
+    if (user.role !== 'employee') {
+      return res.status(403).json({ message: 'Only employees can mark attendance using geolocation.' });
+    }
+    if (!lat || !lng) {
+      return res.status(400).json({ message: 'Latitude and longitude are required.' });
+    }
+    // Office location
+    const officeLat = 18.432941423854608;
+    const officeLng = 73.88695388098188;
+    const maxDistance = 6000; // meters (temporarily increased for testing)
+    const distance = getDistanceFromLatLonInMeters(lat, lng, officeLat, officeLng);
+    console.log('User location:', lat, lng);
+    console.log('Office location:', officeLat, officeLng);
+    console.log('Calculated distance (meters):', distance);
+    if (distance > maxDistance) {
+      return res.status(403).json({ message: 'You are not within the allowed office area.' });
+    }
+    // Find employee by email
+    const employee = await Employee.findOne({ email: user.email });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found.' });
+    }
+    // Check if already marked today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let attendance = await Attendance.findOne({
+      employee: employee._id,
+      date: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) }
+    });
+    if (attendance) {
+      return res.status(200).json({ message: 'Attendance already marked for today.' });
+    }
+    // Check time for status
+    const now = new Date();
+    const hour = now.getHours();
+    let status = 'present';
+    if (hour >= 13) {
+      // After 1PM, do not allow marking, mark as absent if not already present
+      // Check if already absent for today
+      let absentRecord = await Attendance.findOne({
+        employee: employee._id,
+        date: { $gte: today, $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) },
+        status: 'absent'
+      });
+      if (!absentRecord) {
+        absentRecord = new Attendance({
+          employee: employee._id,
+          date: today,
+          status: 'absent'
+        });
+        await absentRecord.save();
+      }
+      return res.status(403).json({ message: "You can't mark attendance due to exceeded time. You are marked absent for today." });
+    } else if (hour >= 10) {
+      status = 'late';
+    } else {
+      status = 'present';
+    }
+    // Mark attendance
+    attendance = new Attendance({
+      employee: employee._id,
+      date: today,
+      checkIn: now,
+      status
+    });
+    await attendance.save();
+    await attendance.populate('employee', 'name email department');
+    res.status(201).json({ message: `Attendance marked as ${status}.`, attendance });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

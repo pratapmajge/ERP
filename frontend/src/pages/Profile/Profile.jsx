@@ -324,12 +324,12 @@ const Profile = () => {
 
         <Grid container spacing={{ xs: 2, md: 4 }} sx={{ justifyContent: 'center' }}>
           {/* Left Column - Hero Profile Card */}
-          <Grid item xs={12} lg={4} sx={{ display: 'flex', justifyContent: 'center' }}>
+          <Grid item xs={12} lg={6} sx={{ display: 'flex', justifyContent: 'center' }}>
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              style={{ width: '100%', maxWidth: '400px' }}
+              style={{ width: '100%', maxWidth: '600px' }}
             >
               <Card
                 sx={{
@@ -721,7 +721,7 @@ const Profile = () => {
                             Last Login
                           </Typography>
                           <Typography variant="h6" sx={{ fontWeight: 600, color: getTextColor(), fontSize: { xs: '0.875rem', md: '1rem' } }}>
-                            {new Date().toLocaleDateString()}
+                            {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'N/A'}
                           </Typography>
                         </Box>
                         
@@ -730,7 +730,7 @@ const Profile = () => {
                             Member Since
                           </Typography>
                           <Typography variant="h6" sx={{ fontWeight: 600, color: getTextColor(), fontSize: { xs: '0.875rem', md: '1rem' } }}>
-                            {new Date().toLocaleDateString()}
+                            {user.joinDate ? new Date(user.joinDate).toLocaleDateString() : (user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A')}
                           </Typography>
                         </Box>
                       </Box>

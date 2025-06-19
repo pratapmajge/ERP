@@ -28,6 +28,7 @@ import {
   EditOutlined as EditOutlinedIcon,
   DeleteOutline as DeleteOutlineIcon,
   Person as PersonIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -330,6 +331,7 @@ const Departments = () => {
     description: '',
     manager: '',
   });
+  const [searchTerm, setSearchTerm] = useState('');
   const theme = useTheme();
 
   // Fetch departments and employees on component mount
@@ -486,6 +488,17 @@ const Departments = () => {
     }
   };
 
+  // Filter departments by name or manager name
+  const filteredDepartments = departments.filter(dept => {
+    const name = dept.name || '';
+    const manager = dept.manager?.name || '';
+    const term = searchTerm.toLowerCase();
+    return (
+      name.toLowerCase().includes(term) ||
+      manager.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 4 } }}>
       <motion.div
@@ -551,6 +564,21 @@ const Departments = () => {
             </Button>
           </motion.div>
         </Box>
+        <TextField
+          label="Search departments"
+          variant="outlined"
+          size="small"
+          fullWidth
+          sx={{ mb: 3, background: 'rgba(102,126,234,0.06)', borderRadius: 2, boxShadow: 1, '& .MuiOutlinedInput-root': { borderRadius: 2, boxShadow: 1, '&:hover': { boxShadow: 3, background: 'rgba(102,126,234,0.10)' }, '&.Mui-focused': { boxShadow: 4, background: 'rgba(102,126,234,0.13)' } } }}
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          autoComplete="off"
+          InputProps={{
+            startAdornment: (
+              <SearchIcon sx={{ color: 'primary.main', mr: 1 }} />
+            ),
+          }}
+        />
       </motion.div>
 
       {/* Department Stats */}
@@ -697,7 +725,7 @@ const Departments = () => {
         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
         gap: 3
       }}>
-        {departments.map((department, index) => (
+        {filteredDepartments.map((department, index) => (
           <motion.div
             key={department._id}
             initial={{ opacity: 0, y: 20 }}

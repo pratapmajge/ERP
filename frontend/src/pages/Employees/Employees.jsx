@@ -38,6 +38,7 @@ import {
   VpnKeyOutlined as VpnKeyOutlinedIcon,
   DeleteOutline as DeleteOutlineIcon,
   MoreVert as MoreVertIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -60,6 +61,7 @@ const Employees = () => {
     phone: '',
     salary: '',
   });
+  const [searchTerm, setSearchTerm] = useState('');
   const theme = useTheme();
 
   // Fetch employees and departments on component mount
@@ -323,6 +325,19 @@ const Employees = () => {
     }
   };
 
+  // Filter employees by name, email, or department name
+  const filteredEmployees = employees.filter(emp => {
+    const name = emp.name || '';
+    const email = emp.email || '';
+    const dept = emp.department?.name || emp.department || '';
+    const term = searchTerm.toLowerCase();
+    return (
+      name.toLowerCase().includes(term) ||
+      email.toLowerCase().includes(term) ||
+      dept.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 4 } }}>
       <motion.div
@@ -359,6 +374,21 @@ const Employees = () => {
             </Button>
           </motion.div>
         </Box>
+        <TextField
+          label="Search employees"
+          variant="outlined"
+          size="small"
+          fullWidth
+          sx={{ mb: 3, background: 'rgba(102,126,234,0.06)', borderRadius: 2, boxShadow: 1, '& .MuiOutlinedInput-root': { borderRadius: 2, boxShadow: 1, '&:hover': { boxShadow: 3, background: 'rgba(102,126,234,0.10)' }, '&.Mui-focused': { boxShadow: 4, background: 'rgba(102,126,234,0.13)' } } }}
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          autoComplete="off"
+          InputProps={{
+            startAdornment: (
+              <SearchIcon sx={{ color: 'primary.main', mr: 1 }} />
+            ),
+          }}
+        />
       </motion.div>
 
       <Card>
@@ -369,7 +399,7 @@ const Employees = () => {
             gap: 3,
             p: 2
           }}>
-            {employees.map((employee, index) => (
+            {filteredEmployees.map((employee, index) => (
               <motion.div
                 key={employee._id}
                 initial={{ opacity: 0, y: 20 }}

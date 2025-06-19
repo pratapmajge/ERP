@@ -98,6 +98,20 @@ const Login = () => {
         };
         setAuth(data.token, userData);
         
+        // Fetch full profile and update localStorage
+        try {
+          const profileRes = await fetch('http://localhost:5001/api/auth/profile', {
+            headers: { 'Authorization': `Bearer ${data.token}` },
+          });
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            setAuth(data.token, profileData);
+            console.log('Full profile data stored:', profileData);
+          }
+        } catch (e) {
+          console.error('Failed to fetch full profile after login:', e);
+        }
+
         console.log('Login successful, token stored:', data.token);
         console.log('User data:', userData);
         navigate('/app');

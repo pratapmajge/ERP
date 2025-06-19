@@ -70,6 +70,10 @@ exports.login = async (req, res) => {
       }
     }
 
+    // Update lastLogin
+    user.lastLogin = new Date();
+    await user.save();
+
     // Generate token
     const token = generateToken(user._id);
 
@@ -78,6 +82,7 @@ exports.login = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      lastLogin: user.lastLogin,
       token
     });
   } catch (error) {
@@ -96,13 +101,15 @@ exports.getProfile = async (req, res) => {
       if (employee) {
         const profileData = {
           ...user.toObject(),
+          employeeId: employee._id,
           phone: employee.phone,
           position: employee.position,
           department: employee.department?.name || '',
           salary: employee.salary,
           joinDate: employee.joinDate,
           address: employee.address,
-          profilePhoto: employee.profilePhoto
+          profilePhoto: employee.profilePhoto,
+          lastLogin: user.lastLogin
         };
         console.log('Profile data for employee:', profileData); // Debug log
         return res.json(profileData);
@@ -158,6 +165,7 @@ exports.updateProfile = async (req, res) => {
       if (employee) {
         const updatedProfileData = {
           ...user.toObject(),
+          employeeId: employee._id,
           phone: employee.phone,
           position: employee.position,
           department: employee.department?.name || '',

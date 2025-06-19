@@ -9,7 +9,8 @@ const {
   deleteAttendance,
   checkIn,
   checkOut,
-  getAttendanceByEmployee
+  getAttendanceByEmployee,
+  autoGeolocationAttendance
 } = require('../controllers/attendanceController');
 
 // Create a new attendance record (admin, hr)
@@ -35,5 +36,8 @@ router.put('/:id', auth, authorize('admin', 'hr'), updateAttendance);
 
 // Delete attendance (admin only)
 router.delete('/:id', auth, authorize('admin'), deleteAttendance);
+
+// Geolocation-based automatic attendance (employee)
+router.post('/auto-geolocation', auth, autoGeolocationAttendance);
 
 module.exports = router; 
