@@ -30,6 +30,8 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import CircularProgress from '@mui/material/CircularProgress';
+import Fade from '@mui/material/Fade';
 
 const DepartmentCard = ({ department, onEdit, onDelete, employees }) => {
   const theme = useTheme();
@@ -485,7 +487,7 @@ const Departments = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2, md: 4 } }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -773,6 +775,41 @@ const Departments = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {loading && (
+        <Fade in={loading} unmountOnExit>
+          <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(30, 41, 59, 0.85)',
+            zIndex: 9999,
+            transition: 'background 0.3s',
+          }}>
+            <CircularProgress 
+              size={70} 
+              thickness={5} 
+              sx={{
+                color: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                mb: 2,
+                filter: 'drop-shadow(0 0 12px #667eea88) drop-shadow(0 0 24px #764ba288)'
+              }}
+            />
+            <Typography 
+              variant="h6" 
+              sx={{ color: '#fff', fontWeight: 600, letterSpacing: 1, mt: 1, textShadow: '0 2px 8px #0008' }}
+            >
+              {selectedDepartment ? 'Updating department...' : 'Adding department...'}
+            </Typography>
+          </Box>
+        </Fade>
+      )}
     </Box>
   );
 };

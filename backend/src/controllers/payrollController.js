@@ -3,7 +3,9 @@ const Payroll = require('../models/Payroll');
 // Create a new payroll record
 exports.createPayroll = async (req, res) => {
   try {
-    const payroll = new Payroll(req.body);
+    const payrollData = { ...req.body };
+    // If status or paymentDate are not provided, defaults will be used by the model
+    const payroll = new Payroll(payrollData);
     await payroll.save();
     res.status(201).json(payroll);
   } catch (error) {
@@ -14,7 +16,12 @@ exports.createPayroll = async (req, res) => {
 // Get all payroll records
 exports.getAllPayrolls = async (req, res) => {
   try {
-    const payrolls = await Payroll.find().populate('employee');
+    const payrolls = await Payroll.find()
+      .populate({
+        path: 'employee',
+        populate: { path: 'department', select: 'name' },
+        select: 'name department',
+      });
     res.status(200).json(payrolls);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -24,7 +31,12 @@ exports.getAllPayrolls = async (req, res) => {
 // Get payroll by ID
 exports.getPayrollById = async (req, res) => {
   try {
-    const payroll = await Payroll.findById(req.params.id).populate('employee');
+    const payroll = await Payroll.findById(req.params.id)
+      .populate({
+        path: 'employee',
+        populate: { path: 'department', select: 'name' },
+        select: 'name department',
+      });
     if (!payroll) {
       return res.status(404).json({ message: 'Payroll record not found' });
     }
@@ -37,7 +49,8 @@ exports.getPayrollById = async (req, res) => {
 // Update payroll
 exports.updatePayroll = async (req, res) => {
   try {
-    const payroll = await Payroll.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const updateData = { ...req.body };
+    const payroll = await Payroll.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
     if (!payroll) {
       return res.status(404).json({ message: 'Payroll record not found' });
     }
@@ -55,6 +68,26 @@ exports.deletePayroll = async (req, res) => {
       return res.status(404).json({ message: 'Payroll record not found' });
     }
     res.status(200).json({ message: 'Payroll record deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get payroll records for a specific employee
+exports.getPayrollByEmployee = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const { month, year } = req.query;
+    const filter = { employee: employeeId };
+    if (month) filter.month = Number(month);
+    if (year) filter.year = Number(year);
+    const payrolls = await Payroll.find(filter)
+      .populate({
+        path: 'employee',
+        populate: { path: 'department', select: 'name' },
+        select: 'name department',
+      });
+    res.status(200).json(payrolls);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

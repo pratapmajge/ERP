@@ -129,18 +129,30 @@ exports.updateProfile = async (req, res) => {
     
     // For employees, update employee data
     if (user.role === 'employee') {
-      const updateData = {};
-      if (phone !== undefined) updateData.phone = phone;
-      if (address !== undefined) updateData.address = address;
-      
+      const updateData = {
+        phone: phone,
+        address: address
+      };
+
+      console.log('--- DEBUG: Incoming updateProfile fields ---');
+      console.log('phone:', phone, typeof phone);
+      console.log('address:', address, typeof address);
+      console.log('Full updateData:', updateData);
+
+      console.log('Attempting to update Employee with:', updateData);
+      const beforeEmployee = await Employee.findOne({ email: user.email });
+      console.log('Employee before update:', beforeEmployee);
+
       if (Object.keys(updateData).length > 0) {
         await Employee.findOneAndUpdate(
           { email: user.email },
-          updateData,
-          { new: true, runValidators: true }
+          { $set: updateData },
+          { new: true, runValidators: true, upsert: true }
         );
       }
-      
+
+      const afterEmployee = await Employee.findOne({ email: user.email });
+      console.log('Employee after update:', afterEmployee);
       // Get updated employee data
       const employee = await Employee.findOne({ email: user.email }).populate('department');
       if (employee) {

@@ -31,6 +31,11 @@ const employeeSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  address: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   salary: {
     type: Number,
     required: [true, 'Please provide a salary']

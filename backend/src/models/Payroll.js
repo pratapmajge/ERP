@@ -32,6 +32,15 @@ const payrollSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Please provide net salary']
   },
+  status: {
+    type: String,
+    enum: ['Paid', 'Pending', 'Failed'],
+    default: 'Pending',
+  },
+  paymentDate: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now

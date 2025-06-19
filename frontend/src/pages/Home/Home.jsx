@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -126,6 +126,27 @@ const Animated3DHome = () => {
     ? 'radial-gradient(ellipse at 60% 40%, #0a0618 0%, #1a1a2e 60%, #8f5cff22 100%)'
     : 'radial-gradient(ellipse at 60% 40%, #f3e8ff 0%, #e0e7ff 60%, #a29bfe22 100%)';
 
+  const [magnet, setMagnet] = useState({ x: 0, y: 0, isHover: false });
+  const btnRef = useRef();
+
+  const handleMouseMove = (e) => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const btnX = rect.left + rect.width / 2;
+    const btnY = rect.top + rect.height / 2;
+    const distX = e.clientX - btnX;
+    const distY = e.clientY - btnY;
+    const distance = Math.sqrt(distX * distX + distY * distY);
+    if (distance < 100) {
+      setMagnet({ x: distX * 0.25, y: distY * 0.25, isHover: false });
+    } else {
+      setMagnet({ x: 0, y: 0, isHover: false });
+    }
+  };
+  const handleMouseLeave = () => setMagnet({ x: 0, y: 0, isHover: false });
+  const handleMouseEnter = () => setMagnet((m) => ({ ...m, isHover: true }));
+
   return (
     <Box
       sx={{
@@ -217,67 +238,64 @@ const Animated3DHome = () => {
         </motion.div>
       </Box>
 
-      {/* More floating, animated elements for extra depth */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.5 }}
-        transition={{ duration: 1 }}
-        style={{ position: 'absolute', top: '12%', left: '8%', zIndex: 1 }}
+      {/* Theme Toggle Icon - floating in top right above Login/Register */}
+      <Box
+        sx={{ position: 'fixed', bottom: 20, left: 24, zIndex: 2000 }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
-        <motion.div
-          animate={{ y: [0, 40, 0], x: [0, 30, 0] }}
-          transition={{ repeat: Infinity, duration: 14, ease: 'easeInOut' }}
-          style={{
-            width: 160,
-            height: 160,
-            borderRadius: '50%',
-            background: themeMode === 'dark'
-              ? 'linear-gradient(135deg, #8f5cff88, #00eaff88)'
-              : 'linear-gradient(135deg, #a29bfe88, #f093fb88)',
-            filter: 'blur(32px)',
-          }}
-        />
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ duration: 1.2 }}
-        style={{ position: 'absolute', bottom: '10%', right: '10%', zIndex: 1 }}
-      >
-        <motion.div
-          animate={{ y: [0, -50, 0], x: [0, -40, 0] }}
-          transition={{ repeat: Infinity, duration: 18, ease: 'easeInOut' }}
-          style={{
-            width: 120,
-            height: 120,
-            borderRadius: '50%',
-            background: themeMode === 'dark'
-              ? 'linear-gradient(135deg, #00eaff88, #8f5cff88)'
-              : 'linear-gradient(135deg, #f7971e88, #ffd20088)',
-            filter: 'blur(24px)',
-          }}
-        />
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.18 }}
-        transition={{ duration: 1.5 }}
-        style={{ position: 'absolute', top: '40%', left: '45%', zIndex: 1 }}
-      >
-        <motion.div
-          animate={{ rotate: [0, 360] }}
-          transition={{ repeat: Infinity, duration: 28, ease: 'linear' }}
-          style={{
-            width: 320,
-            height: 10,
-            borderRadius: 8,
-            background: themeMode === 'dark'
-              ? 'linear-gradient(90deg, #fff0, #00eaff44, #fff0)'
-              : 'linear-gradient(90deg, #fff0, #a29bfe, #fff0)',
-            filter: 'blur(2px)',
-          }}
-        />
-      </motion.div>
+        <Tooltip title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`} arrow>
+          <IconButton
+            ref={btnRef}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onClick={toggleTheme}
+            sx={{
+              color: '#fff',
+              background: themeMode === 'dark'
+                ? 'linear-gradient(135deg, #1a1a2e 0%, #8f5cff 100%)'
+                : 'linear-gradient(135deg, #a29bfe 0%, #f093fb 100%)',
+              boxShadow: themeMode === 'dark' ? '0 2px 16px #00eaff88' : '0 2px 16px #a29bfe88',
+              border: `2px solid ${themeMode === 'dark' ? '#00eaff44' : '#a29bfe44'}`,
+              backdropFilter: 'blur(12px)',
+              transition: 'all 0.5s cubic-bezier(0.4,1.2,0.4,1)',
+              position: 'relative',
+              overflow: 'hidden',
+              '&:hover': {
+                background: themeMode === 'dark'
+                  ? 'linear-gradient(270deg, #8f5cff 0%, #00eaff 50%, #f093fb 100%)'
+                  : 'linear-gradient(270deg, #a29bfe 0%, #f093fb 50%, #8f5cff 100%)',
+                animation: 'colorMorph 1.2s linear',
+                transform: 'scale(1.13)',
+                boxShadow: themeMode === 'dark'
+                  ? '0 0 32px 12px #00eaffcc, 0 2px 24px #00eaff88'
+                  : '0 0 32px 12px #a29bfecc, 0 2px 24px #a29bfe88',
+                borderColor: themeMode === 'dark' ? '#00eaff' : '#a29bfe',
+              },
+              '@keyframes colorMorph': {
+                '0%': {
+                  background: themeMode === 'dark'
+                    ? 'linear-gradient(135deg, #1a1a2e 0%, #8f5cff 100%)'
+                    : 'linear-gradient(135deg, #a29bfe 0%, #f093fb 100%)',
+                },
+                '50%': {
+                  background: themeMode === 'dark'
+                    ? 'linear-gradient(270deg, #8f5cff 0%, #00eaff 50%, #f093fb 100%)'
+                    : 'linear-gradient(270deg, #a29bfe 0%, #f093fb 50%, #8f5cff 100%)',
+                },
+                '100%': {
+                  background: themeMode === 'dark'
+                    ? 'linear-gradient(135deg, #1a1a2e 0%, #8f5cff 100%)'
+                    : 'linear-gradient(135deg, #a29bfe 0%, #f093fb 100%)',
+                },
+              },
+            }}
+            aria-label="Toggle theme"
+          >
+            {isDarkMode ? <Brightness7 fontSize="medium" /> : <Brightness4 fontSize="medium" />}
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       {/* 3D Cube and Orbiting Icons */}
       <Box sx={{ position: 'relative', width: 340, height: 340, mx: 'auto', my: 6 }}>
@@ -488,44 +506,6 @@ const Animated3DHome = () => {
           >
             Get Started Now
           </Button>
-        </motion.div>
-      </Box>
-
-      {/* Theme Toggle Icon - now floating in bottom left corner */}
-      <Box sx={{ position: 'fixed', bottom: 24, left: 24, zIndex: 30 }}>
-        <motion.div
-          whileHover={{ scale: 1.15, rotate: 20, boxShadow: themeMode === 'dark' ? '0 2px 16px #00eaffcc' : '0 2px 16px #a29bfecc' }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 300 }}
-        >
-          <Tooltip title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`} arrow>
-            <IconButton
-              onClick={toggleTheme}
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                background: themeMode === 'dark'
-                  ? 'rgba(20, 20, 40, 0.85)'
-                  : 'rgba(255,255,255,0.85)',
-                color: themeMode === 'dark' ? '#00eaff' : '#8f5cff',
-                boxShadow: themeMode === 'dark'
-                  ? '0 2px 16px #00eaff88'
-                  : '0 2px 16px #a29bfe88',
-                border: `2px solid ${themeMode === 'dark' ? '#00eaff44' : '#a29bfe44'}`,
-                backdropFilter: 'blur(12px)',
-                transition: 'all 0.3s',
-                '&:hover': {
-                  background: themeMode === 'dark'
-                    ? 'rgba(0,234,255,0.18)'
-                    : 'rgba(160,155,254,0.18)',
-                },
-              }}
-              aria-label="Toggle theme"
-            >
-              {isDarkMode ? <Brightness7 fontSize="large" /> : <Brightness4 fontSize="large" />}
-            </IconButton>
-          </Tooltip>
         </motion.div>
       </Box>
     </Box>

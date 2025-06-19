@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -31,12 +31,16 @@ import {
   Brightness4,
   Brightness7,
   ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { clearAuth, getUser } from '../../utils/auth';
+import CircularProgress from '@mui/material/CircularProgress';
+import Fade from '@mui/material/Fade';
 
 const drawerWidth = 240;
 
@@ -61,7 +65,7 @@ const Layout = () => {
   let roleMenuItems = [];
   if (role === 'admin' || role === 'hr') {
     roleMenuItems = [
-      { text: 'Dashboard', icon: <DashboardIcon />, path: '/app/dashboard' },
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/app' },
       { text: 'Employees', icon: <PeopleIcon />, path: '/app/employees' },
       { text: 'Departments', icon: <BusinessIcon />, path: '/app/departments' },
       { text: 'Attendance', icon: <AccessTimeIcon />, path: '/app/attendance' },
@@ -69,7 +73,7 @@ const Layout = () => {
     ];
   } else if (role === 'employee') {
     roleMenuItems = [
-      { text: 'Dashboard', icon: <DashboardIcon />, path: '/app/dashboard' },
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/app' },
       { text: 'Attendance', icon: <AccessTimeIcon />, path: '/app/attendance' },
       { text: 'Payroll', icon: <MoneyIcon />, path: '/app/payroll' },
       { text: 'My Profile', icon: <AccountCircleIcon />, path: '/app/profile' },
@@ -88,12 +92,17 @@ const Layout = () => {
     setAnchorEl(null);
   };
 
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
   const handleLogout = () => {
     // Clear authentication data
-    clearAuth();
-    // Redirect to home page
-    navigate('/');
-    handleProfileMenuClose();
+    setLogoutLoading(true);
+    setTimeout(() => {
+      clearAuth();
+      navigate('/');
+      handleProfileMenuClose();
+      setLogoutLoading(false);
+    }, 1000);
   };
 
   // Close drawer on mobile when clicking a menu item
@@ -139,31 +148,6 @@ const Layout = () => {
         <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 1, sm: 2 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                onClick={handleDrawerToggle}
-                edge="start"
-                sx={{ 
-                  marginRight: { xs: 1, sm: 2 },
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    transform: 'scale(1.05)'
-                  },
-                  transition: 'all 0.3s ease-in-out'
-                }}
-              >
-                <MenuIcon />
-              </IconButton>
-            </motion.div>
-            
-            <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -200,52 +184,97 @@ const Layout = () => {
                   color="inherit" 
                   onClick={toggleTheme}
                   sx={{
+                    width: 36,
+                    height: 36,
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
                     backdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
                     '&:hover': {
                       backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                      transform: 'scale(1.05)'
+                      transform: 'scale(1.12)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.18)'
                     },
-                    transition: 'all 0.3s ease-in-out'
+                    transition: 'all 0.3s cubic-bezier(.4,2,.6,1)',
+                    p: 0
                   }}
                 >
-                  {isDarkMode ? <Brightness7 /> : <Brightness4 />}
+                  <Box sx={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {isDarkMode ? <Brightness7 fontSize="small" /> : <Brightness4 fontSize="small" />}
+                  </Box>
                 </IconButton>
               </Tooltip>
             </motion.div>
-            
             <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.12 }}
+              whileTap={{ scale: 0.95 }}
             >
               <Tooltip title="User Profile" arrow>
                 <IconButton
-                  size="large"
+                  size="small"
                   edge="end"
                   aria-label="account of current user"
                   aria-haspopup="true"
-                  onClick={handleProfileMenuOpen}
+                  onClick={() => navigate('/app/profile')}
                   color="inherit"
                   sx={{
+                    width: 36,
+                    height: 36,
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
                     backdropFilter: 'blur(10px)',
                     border: '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
                     '&:hover': {
                       backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                      transform: 'scale(1.05)'
+                      transform: 'scale(1.12)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.18)'
                     },
-                    transition: 'all 0.3s ease-in-out'
+                    transition: 'all 0.3s cubic-bezier(.4,2,.6,1)',
+                    p: 0
                   }}
                 >
                   <Avatar sx={{ 
                     bgcolor: theme.palette.primary.main,
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    width: { xs: 32, sm: 40 },
-                    height: { xs: 32, sm: 40 }
+                    width: 28,
+                    height: 28
                   }}>
-                    <AccountCircleIcon />
+                    <PersonIcon fontSize="small" />
                   </Avatar>
+                </IconButton>
+              </Tooltip>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.12 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Tooltip title="Logout" arrow>
+                <IconButton
+                  size="small"
+                  edge="end"
+                  aria-label="logout"
+                  onClick={handleLogout}
+                  color="inherit"
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      transform: 'scale(1.12)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.18)'
+                    },
+                    transition: 'all 0.3s cubic-bezier(.4,2,.6,1)',
+                    ml: 1,
+                    p: 0
+                  }}
+                >
+                  <Box sx={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <LogoutIcon fontSize="small" />
+                  </Box>
                 </IconButton>
               </Tooltip>
             </motion.div>
@@ -274,7 +303,7 @@ const Layout = () => {
             }}
           >
             <MenuItem onClick={handleProfileMenuClose} sx={{ gap: 1 }}>
-              <AccountCircleIcon fontSize="small" />
+              <PersonIcon fontSize="small" />
               Profile
             </MenuItem>
             <MenuItem onClick={handleProfileMenuClose} sx={{ gap: 1 }}>
@@ -365,7 +394,7 @@ const Layout = () => {
                 transition: 'all 0.3s ease-in-out'
               }}
             >
-              <ChevronLeftIcon />
+              {open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
             </IconButton>
           </motion.div>
         </Toolbar>
@@ -383,53 +412,60 @@ const Layout = () => {
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <ListItem disablePadding sx={{ display: 'block', mb: 0.5 }}>
-                <ListItemButton
-                  onClick={() => handleMenuClick(item.path)}
-                  selected={location.pathname === item.path}
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: 'initial',
-                    px: 2.5,
-                    mx: 1,
-                    borderRadius: 2,
-                    backgroundColor: location.pathname === item.path 
-                      ? 'rgba(255, 255, 255, 0.2)' 
-                      : 'transparent',
-                    backdropFilter: 'blur(10px)',
-                    border: location.pathname === item.path 
-                      ? '1px solid rgba(255, 255, 255, 0.3)' 
-                      : '1px solid transparent',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      transform: 'translateX(4px)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                    },
-                    transition: 'all 0.3s ease-in-out'
-                  }}
-                >
-                  <ListItemIcon
+                <Tooltip title={!open ? item.text : ''} placement="right" arrow>
+                  <ListItemButton
+                    onClick={() => handleMenuClick(item.path)}
+                    selected={location.pathname === item.path}
                     sx={{
-                      minWidth: 0,
-                      mr: 3,
-                      justifyContent: 'center',
-                      color: location.pathname === item.path 
-                        ? theme.palette.primary.main 
-                        : 'inherit',
+                      minHeight: 48,
+                      justifyContent: open ? 'initial' : 'center',
+                      px: open ? 2.5 : 1.5,
+                      mx: 1,
+                      borderRadius: 2,
+                      backgroundColor: location.pathname === item.path 
+                        ? 'rgba(255, 255, 255, 0.2)' 
+                        : 'transparent',
+                      backdropFilter: 'blur(10px)',
+                      border: location.pathname === item.path 
+                        ? '1px solid rgba(255, 255, 255, 0.3)' 
+                        : '1px solid transparent',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        transform: 'translateX(4px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                      },
+                      transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
                     }}
                   >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.text}
-                    sx={{
-                      opacity: 1,
-                      color: location.pathname === item.path 
-                        ? theme.palette.primary.main 
-                        : 'inherit',
-                      fontWeight: location.pathname === item.path ? 'bold' : 'normal',
-                    }}
-                  />
-                </ListItemButton>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        mr: open ? 3 : 'auto',
+                        justifyContent: 'center',
+                        color: location.pathname === item.path 
+                          ? theme.palette.primary.main 
+                          : 'inherit',
+                        display: 'flex',
+                        transition: 'margin 0.3s cubic-bezier(0.4,0,0.2,1)',
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    {open && (
+                      <ListItemText
+                        primary={item.text}
+                        sx={{
+                          opacity: open ? 1 : 0,
+                          color: location.pathname === item.path 
+                            ? theme.palette.primary.main 
+                            : 'inherit',
+                          fontWeight: location.pathname === item.path ? 'bold' : 'normal',
+                          transition: 'opacity 0.3s cubic-bezier(0.4,0,0.2,1)',
+                        }}
+                      />
+                    )}
+                  </ListItemButton>
+                </Tooltip>
               </ListItem>
             </motion.div>
           ))}
@@ -452,8 +488,43 @@ const Layout = () => {
           minHeight: '100vh',
           overflowX: 'auto',
           boxSizing: 'border-box',
+          position: 'relative',
         }}
       >
+        {logoutLoading && (
+          <Fade in={logoutLoading} unmountOnExit>
+            <Box sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(30, 41, 59, 0.75)',
+              zIndex: 9999,
+              transition: 'background 0.3s',
+            }}>
+              <CircularProgress 
+                size={70} 
+                thickness={5} 
+                sx={{
+                  color: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                  mb: 2,
+                  filter: 'drop-shadow(0 0 12px #667eea88) drop-shadow(0 0 24px #764ba288)'
+                }}
+              />
+              <Typography 
+                variant="h6" 
+                sx={{ color: '#fff', fontWeight: 600, letterSpacing: 1, mt: 1, textShadow: '0 2px 8px #0008' }}
+              >
+                Logging out...
+              </Typography>
+            </Box>
+          </Fade>
+        )}
         <Box sx={{ width: '100%', maxWidth: 1200, mx: 'auto' }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}

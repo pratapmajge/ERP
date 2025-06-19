@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -34,54 +34,7 @@ import {
 import { motion } from 'framer-motion';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-
-// Sample data - replace with API calls later
-const initialPayroll = [
-  {
-    id: 1,
-    employeeName: 'John Doe',
-    department: 'IT',
-    basicSalary: 5000,
-    allowances: 1000,
-    deductions: 500,
-    netSalary: 5500,
-    status: 'Paid',
-    paymentDate: '2024-03-15',
-  },
-  {
-    id: 2,
-    employeeName: 'Jane Smith',
-    department: 'HR',
-    basicSalary: 4500,
-    allowances: 800,
-    deductions: 400,
-    netSalary: 4900,
-    status: 'Pending',
-    paymentDate: null,
-  },
-  {
-    id: 3,
-    employeeName: 'Mike Johnson',
-    department: 'Finance',
-    basicSalary: 5500,
-    allowances: 1200,
-    deductions: 600,
-    netSalary: 6100,
-    status: 'Paid',
-    paymentDate: '2024-03-15',
-  },
-  {
-    id: 4,
-    employeeName: 'Sarah Williams',
-    department: 'Marketing',
-    basicSalary: 4800,
-    allowances: 900,
-    deductions: 450,
-    netSalary: 5250,
-    status: 'Pending',
-    paymentDate: null,
-  },
-];
+import { getUser } from '../../utils/auth';
 
 const StatusChip = ({ status }) => {
   const theme = useTheme();
@@ -179,14 +132,111 @@ const StatCard = ({ title, value, icon, color }) => {
 };
 
 const Payroll = () => {
-  const [payroll, setPayroll] = useState(initialPayroll);
+  const [payroll, setPayroll] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [formData, setFormData] = useState({
+    employee: '',
+    basicSalary: '',
+    allowances: '',
+    deductions: '',
+    netSalary: '',
+    status: 'Pending',
+    paymentDate: null,
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
+  });
   const theme = useTheme();
+  const user = getUser();
+  const isEmployee = user?.role === 'employee';
+
+  useEffect(() => {
+    if (isEmployee) {
+      fetchEmployeePayroll();
+    } else {
+      fetchPayroll();
+      fetchEmployees();
+    }
+  }, []);
+
+  const fetchPayroll = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5001/api/payroll', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPayroll(data);
+      }
+    } catch (error) {
+      console.error('Error fetching payroll:', error);
+    }
+  };
+
+  const fetchEmployeePayroll = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      const response = await fetch(`http://localhost:5001/api/payroll/employee/${user._id}?month=${month}&year=${year}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPayroll(data);
+      }
+    } catch (error) {
+      console.error('Error fetching employee payroll:', error);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5001/api/employees', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data);
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    }
+  };
 
   const handleOpen = (record = null) => {
-    setSelectedRecord(record);
+    if (record) {
+      setSelectedRecord(record);
+      setFormData({
+        employee: record.employee?._id || record.employee,
+        basicSalary: record.basicSalary,
+        allowances: record.allowances,
+        deductions: record.deductions,
+        netSalary: record.netSalary,
+        status: record.status || 'Pending',
+        paymentDate: record.paymentDate ? new Date(record.paymentDate) : null,
+        month: record.month,
+        year: record.year,
+      });
+    } else {
+      setSelectedRecord(null);
+      setFormData({
+        employee: '',
+        basicSalary: '',
+        allowances: '',
+        deductions: '',
+        netSalary: '',
+        status: 'Pending',
+        paymentDate: null,
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+      });
+    }
     setOpen(true);
   };
 
@@ -195,18 +245,127 @@ const Payroll = () => {
     setOpen(false);
   };
 
-  const handleDelete = (id) => {
-    setPayroll(payroll.filter((record) => record.id !== id));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateChange = (date) => {
+    setFormData((prev) => ({ ...prev, paymentDate: date }));
+  };
+
+  const handleMonthChange = (date) => {
+    setSelectedMonth(date);
+    setFormData((prev) => ({ ...prev, month: date.getMonth() + 1, year: date.getFullYear() }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const url = selectedRecord
+        ? `http://localhost:5001/api/payroll/${selectedRecord._id}`
+        : 'http://localhost:5001/api/payroll';
+      const method = selectedRecord ? 'PUT' : 'POST';
+      const body = { ...formData };
+      if (body.paymentDate instanceof Date) {
+        body.paymentDate = body.paymentDate.toISOString();
+      }
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+      if (response.ok) {
+        fetchPayroll();
+        handleClose();
+      }
+    } catch (error) {
+      console.error('Error saving payroll:', error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this payroll record?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5001/api/payroll/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        fetchPayroll();
+      }
+    } catch (error) {
+      console.error('Error deleting payroll:', error);
+    }
   };
 
   // Calculate summary statistics
-  const totalSalary = payroll.reduce((sum, record) => sum + record.netSalary, 0);
+  const totalSalary = payroll.reduce((sum, record) => sum + (record.netSalary || 0), 0);
   const pendingSalary = payroll
     .filter((record) => record.status === 'Pending')
-    .reduce((sum, record) => sum + record.netSalary, 0);
+    .reduce((sum, record) => sum + (record.netSalary || 0), 0);
   const paidSalary = payroll
     .filter((record) => record.status === 'Paid')
-    .reduce((sum, record) => sum + record.netSalary, 0);
+    .reduce((sum, record) => sum + (record.netSalary || 0), 0);
+
+  if (isEmployee) {
+    // Employee view: show only current month's payroll status
+    const currentPayroll = payroll[0];
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
+          My Payroll Status (Current Month)
+        </Typography>
+        {currentPayroll ? (
+          <Card sx={{ maxWidth: 400, mx: 'auto', p: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Status: <StatusChip status={currentPayroll.status} />
+              </Typography>
+              {currentPayroll.status === 'Paid' && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <ReceiptIcon color="success" sx={{ mr: 1 }} />
+                  <Typography color="success.main" sx={{ fontWeight: 'bold' }}>
+                    Your salary for this month has been <b>paid</b> by admin.
+                  </Typography>
+                </Box>
+              )}
+              {currentPayroll.status === 'Pending' && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <MoneyIcon color="warning" sx={{ mr: 1 }} />
+                  <Typography color="warning.main" sx={{ fontWeight: 'bold' }}>
+                    Your salary for this month is <b>pending</b> admin approval/payment.
+                  </Typography>
+                </Box>
+              )}
+              {currentPayroll.status === 'Failed' && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <BankIcon color="error" sx={{ mr: 1 }} />
+                  <Typography color="error.main" sx={{ fontWeight: 'bold' }}>
+                    Payment failed. Please contact admin.
+                  </Typography>
+                </Box>
+              )}
+              <Typography>Net Salary: ${currentPayroll.netSalary}</Typography>
+              <Typography>Basic Salary: ${currentPayroll.basicSalary}</Typography>
+              <Typography>Allowances: ${currentPayroll.allowances}</Typography>
+              <Typography>Deductions: ${currentPayroll.deductions}</Typography>
+              <Typography>Payment Date: {currentPayroll.paymentDate ? new Date(currentPayroll.paymentDate).toLocaleDateString() : '-'}</Typography>
+              <Typography>Month: {currentPayroll.month}</Typography>
+              <Typography>Year: {currentPayroll.year}</Typography>
+            </CardContent>
+          </Card>
+        ) : (
+          <Typography>No payroll record found for this month.</Typography>
+        )}
+        {/* Optionally, add a simple history below */}
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -231,7 +390,7 @@ const Payroll = () => {
               <DatePicker
                 label="Select Month"
                 value={selectedMonth}
-                onChange={(newValue) => setSelectedMonth(newValue)}
+                onChange={handleMonthChange}
                 views={['month', 'year']}
                 renderInput={(params) => <TextField {...params} />}
               />
@@ -298,14 +457,16 @@ const Payroll = () => {
                   <TableCell>Net Salary</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Payment Date</TableCell>
+                  <TableCell>Month</TableCell>
+                  <TableCell>Year</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {payroll.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{record.employeeName}</TableCell>
-                    <TableCell>{record.department}</TableCell>
+                  <TableRow key={record._id}>
+                    <TableCell>{record.employee?.name || '-'}</TableCell>
+                    <TableCell>{record.employee?.department?.name || '-'}</TableCell>
                     <TableCell>${record.basicSalary}</TableCell>
                     <TableCell>${record.allowances}</TableCell>
                     <TableCell>${record.deductions}</TableCell>
@@ -313,7 +474,9 @@ const Payroll = () => {
                     <TableCell>
                       <StatusChip status={record.status} />
                     </TableCell>
-                    <TableCell>{record.paymentDate || '-'}</TableCell>
+                    <TableCell>{record.paymentDate ? new Date(record.paymentDate).toLocaleDateString() : '-'}</TableCell>
+                    <TableCell>{record.month}</TableCell>
+                    <TableCell>{record.year}</TableCell>
                     <TableCell align="right">
                       <IconButton
                         color="primary"
@@ -325,7 +488,7 @@ const Payroll = () => {
                       </IconButton>
                       <IconButton
                         color="error"
-                        onClick={() => handleDelete(record.id)}
+                        onClick={() => handleDelete(record._id)}
                         size="small"
                       >
                         <DeleteIcon />
@@ -346,38 +509,61 @@ const Payroll = () => {
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="Employee Name"
+              select
+              label="Employee"
+              name="employee"
+              value={formData.employee}
+              onChange={handleInputChange}
               fullWidth
-              defaultValue={selectedRecord?.employeeName}
-            />
-            <TextField
-              label="Department"
-              fullWidth
-              defaultValue={selectedRecord?.department}
-            />
+              required
+            >
+              {employees.map((emp) => (
+                <MenuItem key={emp._id} value={emp._id}>
+                  {emp.name} ({emp.department?.name || '-'})
+                </MenuItem>
+              ))}
+            </TextField>
             <TextField
               label="Basic Salary"
+              name="basicSalary"
               type="number"
+              value={formData.basicSalary}
+              onChange={handleInputChange}
               fullWidth
-              defaultValue={selectedRecord?.basicSalary}
+              required
             />
             <TextField
               label="Allowances"
+              name="allowances"
               type="number"
+              value={formData.allowances}
+              onChange={handleInputChange}
               fullWidth
-              defaultValue={selectedRecord?.allowances}
             />
             <TextField
               label="Deductions"
+              name="deductions"
               type="number"
+              value={formData.deductions}
+              onChange={handleInputChange}
               fullWidth
-              defaultValue={selectedRecord?.deductions}
+            />
+            <TextField
+              label="Net Salary"
+              name="netSalary"
+              type="number"
+              value={formData.netSalary}
+              onChange={handleInputChange}
+              fullWidth
+              required
             />
             <TextField
               select
               label="Status"
+              name="status"
+              value={formData.status}
+              onChange={handleInputChange}
               fullWidth
-              defaultValue={selectedRecord?.status || 'Pending'}
             >
               <MenuItem value="Paid">Paid</MenuItem>
               <MenuItem value="Pending">Pending</MenuItem>
@@ -386,16 +572,35 @@ const Payroll = () => {
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Payment Date"
-                value={selectedRecord?.paymentDate ? new Date(selectedRecord.paymentDate) : null}
-                onChange={(newValue) => {}}
+                value={formData.paymentDate}
+                onChange={handleDateChange}
                 renderInput={(params) => <TextField {...params} fullWidth />}
               />
             </LocalizationProvider>
+            <TextField
+              label="Month"
+              name="month"
+              type="number"
+              value={formData.month}
+              onChange={handleInputChange}
+              fullWidth
+              inputProps={{ min: 1, max: 12 }}
+              required
+            />
+            <TextField
+              label="Year"
+              name="year"
+              type="number"
+              value={formData.year}
+              onChange={handleInputChange}
+              fullWidth
+              required
+            />
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleClose}>
+          <Button variant="contained" onClick={handleSubmit}>
             {selectedRecord ? 'Update' : 'Add'}
           </Button>
         </DialogActions>

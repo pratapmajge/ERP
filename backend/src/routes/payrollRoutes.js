@@ -6,7 +6,8 @@ const {
   getAllPayrolls,
   getPayrollById,
   updatePayroll,
-  deletePayroll
+  deletePayroll,
+  getPayrollByEmployee
 } = require('../controllers/payrollController');
 
 // Create a new payroll record (admin only)
@@ -23,5 +24,8 @@ router.put('/:id', auth, authorize('admin'), updatePayroll);
 
 // Delete payroll (admin only)
 router.delete('/:id', auth, authorize('admin'), deletePayroll);
+
+// Get payroll records for a specific employee (admin, hr, or the employee themselves)
+router.get('/employee/:employeeId', auth, getPayrollByEmployee);
 
 module.exports = router; 

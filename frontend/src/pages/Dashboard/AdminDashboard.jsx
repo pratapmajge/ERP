@@ -25,8 +25,13 @@ import {
   Group as GroupIcon,
   Schedule as ScheduleIcon,
   Payment as PaymentIcon,
+  Brightness4,
+  Brightness7,
+  AccountCircle
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useTheme as useCustomTheme } from '../../context/ThemeContext';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from 'recharts';
 
 const AdminDashboard = () => {
   const theme = useTheme();
@@ -38,32 +43,49 @@ const AdminDashboard = () => {
     totalPayroll: 0
   });
   const [loading, setLoading] = useState(true);
+  const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [payrolls, setPayrolls] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const { isDarkMode, toggleTheme } = useCustomTheme();
+  const themeMode = isDarkMode ? 'dark' : 'light';
 
   useEffect(() => {
-    fetchStats();
+    fetchAllStats();
   }, []);
 
-  const fetchStats = async () => {
+  const fetchAllStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      
       // Fetch employees
       const employeesResponse = await fetch('http://localhost:5001/api/employees', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const employees = await employeesResponse.json();
-      
+      const employeesData = await employeesResponse.json();
+      setEmployees(employeesData);
       // Fetch departments
       const departmentsResponse = await fetch('http://localhost:5001/api/departments', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const departments = await departmentsResponse.json();
-      
+      const departmentsData = await departmentsResponse.json();
+      setDepartments(departmentsData);
+      // Fetch payrolls
+      const payrollsResponse = await fetch('http://localhost:5001/api/payroll', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const payrollsData = await payrollsResponse.json();
+      setPayrolls(payrollsData);
+      // Fetch attendance
+      const attendanceResponse = await fetch('http://localhost:5001/api/attendance', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const attendanceData = await attendanceResponse.json();
+      setAttendance(attendanceData);
       setStats({
-        totalEmployees: employees.length,
-        totalDepartments: departments.length,
-        activeAttendance: Math.floor(Math.random() * employees.length), // Mock data
-        totalPayroll: employees.reduce((sum, emp) => sum + (emp.salary || 0), 0)
+        totalEmployees: employeesData.length,
+        totalDepartments: departmentsData.length,
+        activeAttendance: Math.floor(Math.random() * employeesData.length), // Mock for now
+        totalPayroll: employeesData.reduce((sum, emp) => sum + (emp.salary || 0), 0)
       });
       setLoading(false);
     } catch (error) {
@@ -118,6 +140,53 @@ const AdminDashboard = () => {
     { title: 'Process Payroll', icon: <PaymentIcon />, color: '#43e97b' }
   ];
 
+  // Employees by Department (Pie Chart)
+  const departmentCounts = departments.map((dept) => ({
+    name: dept.name,
+    value: employees.filter(emp => (emp.department?._id || emp.department) === (dept._id || dept.id)).length
+  })).filter(d => d.value > 0);
+  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#a29bfe', '#fdcb6e', '#00b894', '#e17055'];
+
+  // Payroll Trend (Line Chart)
+  const getMonthYear = (dateStr) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+  const payrollByMonth = {};
+  payrolls.forEach((p) => {
+    const key = getMonthYear(`${p.year}-${p.month}-01`);
+    if (!payrollByMonth[key]) payrollByMonth[key] = 0;
+    payrollByMonth[key] += p.netSalary || 0;
+  });
+  // Get last 5 months
+  const sortedMonths = Object.keys(payrollByMonth).sort().slice(-5);
+  const payrollTrendData = sortedMonths.map(month => ({
+    month,
+    payroll: payrollByMonth[month]
+  }));
+
+  // Attendance Overview (Bar Chart)
+  // Get last 5 days
+  const getDateStr = (date) => {
+    const d = new Date(date);
+    return d.toISOString().slice(0, 10);
+  };
+  const today = new Date();
+  const last5Days = Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (4 - i));
+    return getDateStr(d);
+  });
+  const attendanceByDay = last5Days.map(dateStr => {
+    const records = attendance.filter(a => getDateStr(a.date) === dateStr);
+    return {
+      date: dateStr,
+      Present: records.filter(r => r.status === 'present').length,
+      Absent: records.filter(r => r.status === 'absent').length,
+      Late: records.filter(r => r.status === 'late').length,
+    };
+  });
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header Section */}
@@ -147,20 +216,23 @@ const AdminDashboard = () => {
             backdropFilter: 'blur(10px)'
           }}
         >
-          <Box>
-            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
-              Welcome, Admin! 👋
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Here's what's happening in your organization today
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <AccountCircle fontSize="large" color="inherit" sx={{ mr: 2 }} />
+            <Box>
+              <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Welcome, Admin! 👋
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Here's what's happening in your organization today
+              </Typography>
+            </Box>
           </Box>
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             <IconButton
-              onClick={fetchStats}
+              onClick={fetchAllStats}
               disabled={loading}
               sx={{
                 backgroundColor: 'rgba(255,255,255,0.2)',
@@ -262,69 +334,6 @@ const AdminDashboard = () => {
         </Grid>
       </Box>
 
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-      >
-        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3 }}>
-          Quick Actions
-        </Typography>
-        <Grid container spacing={2}>
-          {quickActions.map((action, index) => (
-            <Grid item xs={12} sm={6} md={3} key={action.title}>
-              <motion.div
-                whileHover={{ y: -5, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Card
-                  sx={{
-                    background: isDark 
-                      ? 'rgba(26, 26, 46, 0.8)' 
-                      : 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(20px)',
-                    border: isDark 
-                      ? '1px solid rgba(255, 255, 255, 0.1)' 
-                      : '1px solid rgba(0, 0, 0, 0.1)',
-                    borderRadius: 3,
-                    boxShadow: isDark 
-                      ? '0 4px 20px rgba(0,0,0,0.3)' 
-                      : '0 4px 20px rgba(0,0,0,0.1)',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease-in-out',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: isDark 
-                        ? '0 8px 32px rgba(0,0,0,0.4)' 
-                        : '0 8px 32px rgba(0,0,0,0.15)'
-                    }
-                  }}
-                >
-                  <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                    <Avatar
-                      sx={{
-                        width: 60,
-                        height: 60,
-                        mx: 'auto',
-                        mb: 2,
-                        backgroundColor: action.color,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                      }}
-                    >
-                      {action.icon}
-                    </Avatar>
-                    <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                      {action.title}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
-      </motion.div>
-
       {/* System Overview */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -336,7 +345,7 @@ const AdminDashboard = () => {
             System Overview
           </Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Card
                 sx={{
                   background: isDark 
@@ -354,34 +363,31 @@ const AdminDashboard = () => {
               >
                 <CardContent>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                    Employee Distribution
+                    Employees by Department
                   </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="body2">Active Employees</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {stats.activeAttendance} / {stats.totalEmployees}
-                      </Typography>
-                    </Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={(stats.activeAttendance / Math.max(stats.totalEmployees, 1)) * 100}
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: 'rgba(255,255,255,0.2)',
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 4,
-                          background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)'
-                        }
-                      }}
-                    />
-                  </Box>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={departmentCounts}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        label
+                      >
+                        {departmentCounts.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
             </Grid>
-            
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Card
                 sx={{
                   background: isDark 
@@ -399,42 +405,67 @@ const AdminDashboard = () => {
               >
                 <CardContent>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                    Recent Activity
+                    Payroll Trend (Last 5 Months)
                   </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: '#667eea' }}>
-                        <PersonIcon fontSize="small" />
-                      </Avatar>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          New employee registered
-                        </Typography>
-                        <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                          2 minutes ago
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: '#f093fb' }}>
-                        <BusinessIcon fontSize="small" />
-                      </Avatar>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          Department updated
-                        </Typography>
-                        <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                          15 minutes ago
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={payrollTrendData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <RechartsTooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="payroll" stroke="#8884d8" strokeWidth={3} dot={{ r: 6 }} activeDot={{ r: 8 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Card
+                sx={{
+                  background: isDark 
+                    ? 'rgba(26, 26, 46, 0.8)' 
+                    : 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(20px)',
+                  border: isDark 
+                    ? '1px solid rgba(255, 255, 255, 0.1)' 
+                    : '1px solid rgba(0, 0, 0, 0.1)',
+                  borderRadius: 3,
+                  boxShadow: isDark 
+                    ? '0 4px 20px rgba(0,0,0,0.3)' 
+                    : '0 4px 20px rgba(0,0,0,0.1)'
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+                    Attendance Overview (Last 5 Days)
+                  </Typography>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={attendanceByDay} stackOffset="sign">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <RechartsTooltip />
+                      <Legend />
+                      <Bar dataKey="Present" stackId="a" fill="#43e97b" />
+                      <Bar dataKey="Absent" stackId="a" fill="#e17055" />
+                      <Bar dataKey="Late" stackId="a" fill="#fdcb6e" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
         </Box>
       </motion.div>
+
+      <Box sx={{ position: 'fixed', top: 24, right: 32, zIndex: 1000 }}>
+        <Tooltip title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`} arrow>
+          <IconButton onClick={toggleTheme} sx={{ color: themeMode === 'dark' ? '#00eaff' : '#8f5cff', background: themeMode === 'dark' ? 'rgba(20, 20, 40, 0.85)' : 'rgba(255,255,255,0.85)', boxShadow: themeMode === 'dark' ? '0 2px 16px #00eaff88' : '0 2px 16px #a29bfe88', border: `2px solid ${themeMode === 'dark' ? '#00eaff44' : '#a29bfe44'}`, backdropFilter: 'blur(12px)', transition: 'all 0.3s', '&:hover': { background: themeMode === 'dark' ? 'rgba(0,234,255,0.18)' : 'rgba(160,155,254,0.18)' } }} aria-label="Toggle theme">
+            {isDarkMode ? <Brightness7 fontSize="medium" /> : <Brightness4 fontSize="medium" />}
+          </IconButton>
+        </Tooltip>
+      </Box>
     </Box>
   );
 };

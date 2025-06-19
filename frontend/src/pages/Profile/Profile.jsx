@@ -14,6 +14,7 @@ import {
   Divider,
   IconButton,
   Paper,
+  MenuItem,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -29,6 +30,8 @@ import {
   Security as SecurityIcon,
   CalendarToday as CalendarIcon,
   Badge as BadgeIcon,
+  CalendarMonth as CalendarMonthIcon,
+  Wc as WcIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -338,14 +341,19 @@ const Profile = () => {
                   overflow: 'visible',
                   position: 'relative',
                   height: 'fit-content',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  py: 4,
+                  px: { xs: 2, sm: 3 },
                   ...(theme.palette.mode === 'light' && {
-                    backgroundImage: 'linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(240,245,255,0.85) 100%), linear-gradient(45deg, rgba(147,197,253,0.05) 0%, rgba(196,181,253,0.05) 100%)',
+                    backgroundImage: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(240,245,255,0.90) 100%)',
                     border: '1px solid rgba(147,197,253,0.4)',
                   }),
                 }}
               >
                 {/* Floating Action Button */}
-                <Box sx={{ position: 'absolute', top: -20, right: 20, zIndex: 2 }}>
+                <Box sx={{ position: 'absolute', top: 16, right: 16, zIndex: 2 }}>
                   {!isEditing ? (
                     <motion.div
                       whileHover={{ scale: 1.1 }}
@@ -400,7 +408,7 @@ const Profile = () => {
                   )}
                 </Box>
 
-                <CardContent sx={{ textAlign: 'center', pt: 4, pb: 3, px: { xs: 2, sm: 3, md: 4 } }}>
+                <CardContent sx={{ textAlign: 'center', p: 0, width: '100%' }}>
                   {/* Profile Avatar */}
                   <motion.div
                     whileHover={{ scale: 1.05 }}
@@ -409,10 +417,10 @@ const Profile = () => {
                     <Avatar
                       src={user.profilePhoto ? `http://localhost:5001${user.profilePhoto}` : ''}
                       sx={{
-                        width: { xs: 100, sm: 120, md: 140 },
-                        height: { xs: 100, sm: 120, md: 140 },
+                        width: { xs: 110, sm: 130, md: 150 },
+                        height: { xs: 110, sm: 130, md: 150 },
                         mx: 'auto',
-                        mb: 3,
+                        mb: 2.5,
                         background: 'linear-gradient(45deg, #667eea, #764ba2)',
                         fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' },
                         boxShadow: '0 15px 35px rgba(102, 126, 234, 0.3)',
@@ -430,13 +438,12 @@ const Profile = () => {
                     sx={{ 
                       fontWeight: 700,
                       color: getTextColor(),
-                      mb: 1.5,
-                      fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
+                      mb: 0.5,
+                      fontSize: { xs: '1.35rem', sm: '1.7rem', md: '2.1rem' },
                     }}
                   >
                     {user.name}
                   </Typography>
-                  
                   <Chip
                     icon={<BadgeIcon />}
                     label={user.role}
@@ -446,38 +453,30 @@ const Profile = () => {
                         : 'linear-gradient(45deg, #a8edea, #fed6e3)',
                       color: theme.palette.mode === 'dark' ? 'white' : '#2d3748',
                       fontWeight: 600,
-                      mb: 3,
+                      mb: 2.5,
                       px: 2,
                       py: 0.5,
-                      fontSize: '0.85rem',
+                      fontSize: '0.95rem',
                     }}
                   />
 
-                  <Divider sx={{ my: 3, opacity: theme.palette.mode === 'dark' ? 0.3 : 0.15 }} />
+                  <Divider sx={{ my: 2, opacity: theme.palette.mode === 'dark' ? 0.3 : 0.15 }} />
 
-                  {/* Quick Stats */}
-                  <Grid container spacing={2} sx={{ mt: 1 }}>
-                    <Grid item xs={6}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.mode === 'dark' ? '#667eea' : '#38b2ac', mb: 0.5, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                          {user.department || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: getSecondaryTextColor(), fontSize: '0.8rem' }}>
-                          Department
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.mode === 'dark' ? '#764ba2' : '#f687b3', mb: 0.5, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                          {user.position || 'N/A'}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: getSecondaryTextColor(), fontSize: '0.8rem' }}>
-                          Position
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
+                  {/* Quick Stats - vertical layout with icons */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, mt: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <BusinessIcon sx={{ color: theme.palette.mode === 'dark' ? '#667eea' : '#38b2ac', fontSize: 22 }} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: getTextColor(), fontSize: '1rem' }}>
+                        {user.department || 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <WorkIcon sx={{ color: theme.palette.mode === 'dark' ? '#764ba2' : '#f687b3', fontSize: 22 }} />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: getTextColor(), fontSize: '1rem' }}>
+                        {user.position || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
             </motion.div>
@@ -516,6 +515,7 @@ const Profile = () => {
                       </Box>
                       
                       <Grid container spacing={{ xs: 2, md: 3 }}>
+                        {/* Row 1: Name, DOB */}
                         <Grid item xs={12} sm={6}>
                           <TextField
                             label="Full Name"
@@ -535,12 +535,12 @@ const Profile = () => {
                               },
                             }}
                             InputProps={{
-                              startAdornment: <PersonIcon sx={{ mr: 1, color: theme.palette.mode === 'dark' ? 'action.active' : '#38b2ac' }} />,
+                              startAdornment: <PersonIcon sx={{ mr: 1, color: theme.palette.mode === 'dark' ? 'action.active' : '#38b2ac' }} />, 
                             }}
                           />
                         </Grid>
-                        
-                        <Grid item xs={12} sm={6}>
+                        {/* Row 2: Gender, Email */}
+                        <Grid item xs={12} sm={6} sx={{ mt: { xs: 0, md: 1 } }}>
                           <TextField
                             label="Email"
                             name="email"
@@ -559,16 +559,17 @@ const Profile = () => {
                               },
                             }}
                             InputProps={{
-                              startAdornment: <EmailIcon sx={{ mr: 1, color: theme.palette.mode === 'dark' ? 'action.active' : '#f5576c' }} />,
+                              startAdornment: <EmailIcon sx={{ mr: 1, color: theme.palette.mode === 'dark' ? 'action.active' : '#f5576c' }} />, 
                             }}
                             helperText="Email cannot be changed"
                           />
                         </Grid>
-
-                        <Grid item xs={12} sm={6}>
+                        {/* Row 3: Phone, Emergency Contact */}
+                        <Grid item xs={12} sm={6} sx={{ mt: { xs: 0, md: 1 } }}>
                           <TextField
                             label="Phone"
                             name="phone"
+                            type="tel"
                             fullWidth
                             value={formData.phone}
                             onChange={handleInputChange}
@@ -584,11 +585,15 @@ const Profile = () => {
                               },
                             }}
                             InputProps={{
-                              startAdornment: <PhoneIcon sx={{ mr: 1, color: theme.palette.mode === 'dark' ? 'action.active' : '#38b2ac' }} />,
+                              startAdornment: <PhoneIcon sx={{ mr: 1, color: theme.palette.mode === 'dark' ? 'action.active' : '#f6ad55' }} />, 
                             }}
                           />
                         </Grid>
-
+                        {/* Divider before address */}
+                        <Grid item xs={12} sx={{ mt: 2, mb: 1 }}>
+                          <Divider sx={{ opacity: 0.5 }} />
+                        </Grid>
+                        {/* Address full width */}
                         <Grid item xs={12}>
                           <TextField
                             label="Address"
@@ -610,7 +615,7 @@ const Profile = () => {
                               },
                             }}
                             InputProps={{
-                              startAdornment: <LocationIcon sx={{ mr: 1, color: theme.palette.mode === 'dark' ? 'action.active' : '#f5576c' }} />,
+                              startAdornment: <LocationIcon sx={{ mr: 1, color: theme.palette.mode === 'dark' ? 'action.active' : '#f5576c' }} />, 
                             }}
                           />
                         </Grid>
