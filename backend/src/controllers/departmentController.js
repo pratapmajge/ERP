@@ -4,6 +4,7 @@ const Employee = require('../models/Employee');
 // Create a new department
 exports.createDepartment = async (req, res) => {
   try {
+    if (req.body.manager === "") req.body.manager = null;
     const department = new Department(req.body);
     await department.save();
     await department.populate('manager', 'name email');
@@ -58,6 +59,7 @@ exports.getDepartmentById = async (req, res) => {
 // Update department
 exports.updateDepartment = async (req, res) => {
   try {
+    if (req.body.manager === "") req.body.manager = null;
     const department = await Department.findByIdAndUpdate(
       req.params.id, 
       req.body, 
