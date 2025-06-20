@@ -333,6 +333,7 @@ const Departments = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const theme = useTheme();
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   // Fetch departments and employees on component mount
   useEffect(() => {
@@ -343,7 +344,7 @@ const Departments = () => {
   const fetchDepartments = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/departments', {
+      const response = await fetch(`${apiUrl}/api/departments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -372,7 +373,7 @@ const Departments = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/employees', {
+      const response = await fetch(`${apiUrl}/api/employees`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -436,8 +437,8 @@ const Departments = () => {
     try {
       const token = localStorage.getItem('token');
       const url = selectedDepartment 
-        ? `http://localhost:5001/api/departments/${selectedDepartment._id}`
-        : 'http://localhost:5001/api/departments';
+        ? `${apiUrl}/api/departments/${selectedDepartment._id}`
+        : `${apiUrl}/api/departments`;
       
       const method = selectedDepartment ? 'PUT' : 'POST';
       
@@ -470,7 +471,7 @@ const Departments = () => {
     if (window.confirm('Are you sure you want to delete this department?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5001/api/departments/${id}`, {
+        const response = await fetch(`${apiUrl}/api/departments/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,

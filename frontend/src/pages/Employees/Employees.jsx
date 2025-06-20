@@ -61,6 +61,7 @@ const Employees = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const theme = useTheme();
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   // Fetch employees and departments on component mount
   useEffect(() => {
@@ -71,7 +72,7 @@ const Employees = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/employees', {
+      const response = await fetch(`${apiUrl}/api/employees`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -93,7 +94,7 @@ const Employees = () => {
   const fetchDepartments = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/departments', {
+      const response = await fetch(`${apiUrl}/api/departments`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -169,8 +170,8 @@ const Employees = () => {
     try {
       const token = localStorage.getItem('token');
       const url = selectedEmployee 
-        ? `http://localhost:5001/api/employees/${selectedEmployee._id}`
-        : 'http://localhost:5001/api/employees';
+        ? `${apiUrl}/api/employees/${selectedEmployee._id}`
+        : `${apiUrl}/api/employees`;
       
       const method = selectedEmployee ? 'PUT' : 'POST';
       
@@ -228,7 +229,7 @@ const Employees = () => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5001/api/employees/${id}`, {
+        const response = await fetch(`${apiUrl}/api/employees/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -252,7 +253,7 @@ const Employees = () => {
     if (window.confirm('Are you sure you want to reset this employee\'s password?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5001/api/employees/${id}/reset-password`, {
+        const response = await fetch(`${apiUrl}/api/employees/${id}/reset-password`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -275,7 +276,7 @@ const Employees = () => {
   const handleGetPassword = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5001/api/employees/${id}/password`, {
+      const response = await fetch(`${apiUrl}/api/employees/${id}/password`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

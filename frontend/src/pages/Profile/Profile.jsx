@@ -48,6 +48,8 @@ const Profile = () => {
     address: '',
   });
 
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     fetchUserProfile();
   }, []);
@@ -55,7 +57,7 @@ const Profile = () => {
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/auth/profile', {
+      const response = await fetch(`${apiUrl}/api/auth/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -112,7 +114,7 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/auth/profile', {
+      const response = await fetch(`${apiUrl}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

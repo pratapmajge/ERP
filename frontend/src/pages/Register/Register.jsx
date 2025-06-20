@@ -47,6 +47,7 @@ const Register = () => {
   const [errors, setErrors] = useState({});
 
   const isDark = theme.palette.mode === 'dark';
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   // Clear any existing tokens when component mounts
   useEffect(() => {
@@ -96,7 +97,7 @@ const Register = () => {
     if (Object.keys(newErrors).length === 0) {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5001/api/auth/register', {
+        const response = await fetch(`${apiUrl}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

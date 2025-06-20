@@ -49,6 +49,7 @@ const AdminDashboard = () => {
   const [attendance, setAttendance] = useState([]);
   const { isDarkMode, toggleTheme } = useCustomTheme();
   const themeMode = isDarkMode ? 'dark' : 'light';
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     fetchAllStats();
@@ -58,25 +59,25 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       // Fetch employees
-      const employeesResponse = await fetch('http://localhost:5001/api/employees', {
+      const employeesResponse = await fetch(`${apiUrl}/api/employees`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const employeesData = await employeesResponse.json();
       setEmployees(employeesData);
       // Fetch departments
-      const departmentsResponse = await fetch('http://localhost:5001/api/departments', {
+      const departmentsResponse = await fetch(`${apiUrl}/api/departments`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const departmentsData = await departmentsResponse.json();
       setDepartments(departmentsData);
       // Fetch payrolls
-      const payrollsResponse = await fetch('http://localhost:5001/api/payroll', {
+      const payrollsResponse = await fetch(`${apiUrl}/api/payroll`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const payrollsData = await payrollsResponse.json();
       setPayrolls(payrollsData);
       // Fetch attendance
-      const attendanceResponse = await fetch('http://localhost:5001/api/attendance', {
+      const attendanceResponse = await fetch(`${apiUrl}/api/attendance`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const attendanceData = await attendanceResponse.json();

@@ -21,8 +21,10 @@ export const validateToken = async () => {
   const token = localStorage.getItem('token');
   if (!token) return false;
 
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   try {
-    const response = await fetch('http://localhost:5001/api/auth/profile', {
+    const response = await fetch(`${apiUrl}/api/auth/profile`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

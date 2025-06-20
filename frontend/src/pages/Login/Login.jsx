@@ -46,6 +46,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const isDark = theme.palette.mode === 'dark';
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   // Clear any existing tokens when component mounts
   useEffect(() => {
@@ -74,7 +75,7 @@ const Login = () => {
     console.log('Login attempt with:', formData);
 
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +101,7 @@ const Login = () => {
         
         // Fetch full profile and update localStorage
         try {
-          const profileRes = await fetch('http://localhost:5001/api/auth/profile', {
+          const profileRes = await fetch(`${apiUrl}/api/auth/profile`, {
             headers: { 'Authorization': `Bearer ${data.token}` },
           });
           if (profileRes.ok) {

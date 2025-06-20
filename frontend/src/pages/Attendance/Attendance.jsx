@@ -10,6 +10,7 @@ const Attendance = () => {
   const [error, setError] = useState('');
   const user = getUser();
   const [searchTerms, setSearchTerms] = useState({});
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (user?.role === 'admin' || user?.role === 'hr') {
@@ -20,7 +21,7 @@ const Attendance = () => {
   const fetchAttendance = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/attendance', {
+      const response = await fetch(`${apiUrl}/api/attendance`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) {
@@ -43,7 +44,7 @@ const Attendance = () => {
         async (position) => {
           try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5001/api/attendance/auto-geolocation', {
+            const res = await fetch(`${apiUrl}/api/attendance/auto-geolocation`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
