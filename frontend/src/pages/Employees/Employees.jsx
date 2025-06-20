@@ -172,36 +172,16 @@ const Employees = () => {
       const url = selectedEmployee 
         ? `${apiUrl}/api/employees/${selectedEmployee._id}`
         : `${apiUrl}/api/employees`;
-      
       const method = selectedEmployee ? 'PUT' : 'POST';
-      
-      let response;
-      
-      if (selectedEmployee) {
-        // Update existing employee (no photo upload for now)
-        response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(formData),
-        });
-      } else {
-        // Create new employee with photo upload
-        const formDataToSend = new FormData();
-        Object.keys(formData).forEach(key => {
-          formDataToSend.append(key, formData[key]);
-        });
-        
-        response = await fetch(url, {
-          method,
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formDataToSend,
-        });
-      }
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
 
       const data = await response.json();
 
@@ -212,7 +192,6 @@ const Employees = () => {
         }
         handleClose();
         fetchEmployees(); // Refresh the list
-        // Clear passwords when employees are updated
         setPasswords({});
       } else {
         setError(data.message || 'Operation failed');
