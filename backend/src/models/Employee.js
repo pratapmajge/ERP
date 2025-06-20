@@ -48,10 +48,6 @@ const employeeSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  },
-  profilePhoto: {
-    type: String,
-    default: ''
   }
 });
 

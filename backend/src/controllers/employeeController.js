@@ -16,12 +16,9 @@ exports.createEmployee = async (req, res) => {
       employeeData.joinDate = new Date(employeeData.joinDate);
     }
 
-    // If a file was uploaded, set profilePhoto
-    if (req.file) {
-      // Save the relative path to the photo
-      employeeData.profilePhoto = `/uploads/${req.file.filename}`;
-    }
-    
+    // Remove file upload logic
+    // Do not set profilePhoto
+
     const employee = new Employee(employeeData);
     await employee.save();
     

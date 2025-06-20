@@ -415,7 +415,6 @@ const Profile = () => {
                     transition={{ duration: 0.2 }}
                   >
                     <Avatar
-                      src={user.profilePhoto ? `http://localhost:5001${user.profilePhoto}` : ''}
                       sx={{
                         width: { xs: 110, sm: 130, md: 150 },
                         height: { xs: 110, sm: 130, md: 150 },
@@ -425,9 +424,27 @@ const Profile = () => {
                         fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' },
                         boxShadow: '0 15px 35px rgba(102, 126, 234, 0.3)',
                         border: '4px solid rgba(255,255,255,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: 'Inter, Roboto, Helvetica, Arial, sans-serif',
+                        fontWeight: 800,
+                        letterSpacing: 2,
+                        textShadow: '0 4px 24px #764ba2cc, 0 1px 2px #fff8',
                       }}
                     >
-                      <PersonIcon sx={{ fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' } }} />
+                      {user.name ? (
+                        <motion.span
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ duration: 0.6, type: 'spring', stiffness: 200 }}
+                          style={{ display: 'inline-block', width: '100%', textAlign: 'center' }}
+                        >
+                          {user.name.charAt(0).toUpperCase()}
+                        </motion.span>
+                      ) : (
+                        <PersonIcon sx={{ fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' } }} />
+                      )}
                     </Avatar>
                   </motion.div>
 

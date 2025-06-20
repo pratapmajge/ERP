@@ -50,8 +50,6 @@ const Employees = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [passwords, setPasswords] = useState({});
-  const [selectedPhoto, setSelectedPhoto] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -151,8 +149,6 @@ const Employees = () => {
       phone: '',
       salary: '',
     });
-    setSelectedPhoto(null);
-    setPhotoPreview('');
     setError('');
     setOpen(false);
   };
@@ -164,23 +160,6 @@ const Employees = () => {
       [name]: value
     }));
     setError('');
-  };
-
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSelectedPhoto(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPhotoPreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const clearPhoto = () => {
-    setSelectedPhoto(null);
-    setPhotoPreview('');
   };
 
   const handleSubmit = async () => {
@@ -213,10 +192,6 @@ const Employees = () => {
         Object.keys(formData).forEach(key => {
           formDataToSend.append(key, formData[key]);
         });
-        
-        if (selectedPhoto) {
-          formDataToSend.append('profilePhoto', selectedPhoto);
-        }
         
         response = await fetch(url, {
           method,
@@ -453,17 +428,16 @@ const Employees = () => {
                     {/* Header with Avatar and Name */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                       <Avatar
-                        src={employee.profilePhoto ? `http://localhost:5001${employee.profilePhoto}` : ''}
-                        sx={{ 
-                          width: 60, 
-                          height: 60, 
+                        sx={{
+                          width: 60,
+                          height: 60,
                           mr: 2,
                           border: '3px solid rgba(255,255,255,0.3)',
                           boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
                           borderRadius: '50%'
                         }}
                       >
-                        <PersonIcon sx={{ fontSize: 30 }} />
+                        {employee.name ? employee.name.charAt(0).toUpperCase() : <PersonIcon sx={{ fontSize: 30 }} />}
                       </Avatar>
                       <Box>
                         <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0.5 }}>
@@ -684,45 +658,6 @@ const Employees = () => {
             </Alert>
           )}
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {/* Photo Upload Section */}
-            {!selectedEmployee && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
-                <Typography variant="h6">Profile Photo</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
-                    src={photoPreview}
-                    sx={{ width: 80, height: 80 }}
-                  >
-                    <PersonIcon sx={{ fontSize: 40 }} />
-                  </Avatar>
-                  <Box>
-                    <input
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      id="photo-upload"
-                      type="file"
-                      onChange={handlePhotoChange}
-                    />
-                    <label htmlFor="photo-upload">
-                      <Button variant="outlined" component="span">
-                        Choose Photo
-                      </Button>
-                    </label>
-                    {selectedPhoto && (
-                      <Button
-                        variant="text"
-                        color="error"
-                        onClick={clearPhoto}
-                        sx={{ ml: 1 }}
-                      >
-                        Remove
-                      </Button>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-            )}
-            
             <TextField
               label="Name"
               name="name"

@@ -10,23 +10,9 @@ const {
   resetPassword,
   getEmployeePassword
 } = require('../controllers/employeeController');
-const multer = require('multer');
-const path = require('path');
-
-// Multer setup for photo upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../../uploads'));
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    cb(null, Date.now() + '-' + file.fieldname + ext);
-  }
-});
-const upload = multer({ storage });
 
 // Create a new employee (admin only)
-router.post('/', auth, authorize('admin'), upload.single('profilePhoto'), createEmployee);
+router.post('/', auth, authorize('admin'), createEmployee);
 
 // Get all employees (admin, hr)
 router.get('/', auth, authorize('admin', 'hr'), getAllEmployees);
