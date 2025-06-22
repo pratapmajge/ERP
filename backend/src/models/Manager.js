@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const employeeSchema = new mongoose.Schema({
+const managerSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Please provide a name'],
@@ -42,13 +42,8 @@ const employeeSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'hr', 'employee'],
-    default: 'employee'
-  },
-  manager: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null
+    enum: ['admin', 'hr', 'manager'],
+    default: 'manager'
   },
   createdAt: {
     type: Date,
@@ -56,4 +51,4 @@ const employeeSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Employee', employeeSchema); 
+module.exports = mongoose.model('Manager', managerSchema); 

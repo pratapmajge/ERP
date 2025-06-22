@@ -34,6 +34,7 @@ import {
   Wc as WcIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { api } from '../../utils/api';
 
 const Profile = () => {
   const theme = useTheme();
@@ -56,25 +57,14 @@ const Profile = () => {
 
   const fetchUserProfile = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${apiUrl}/api/auth/profile`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const userData = await api.get('/auth/profile');
+      console.log('Fetched user data:', userData);
+      setUser(userData);
+      setFormData({
+        name: userData.name || '',
+        phone: userData.phone || '',
+        address: userData.address || '',
       });
-
-      if (response.ok) {
-        const userData = await response.json();
-        console.log('Fetched user data:', userData);
-        setUser(userData);
-        setFormData({
-          name: userData.name || '',
-          phone: userData.phone || '',
-          address: userData.address || '',
-        });
-      } else {
-        console.error('Failed to fetch user profile');
-      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
@@ -113,33 +103,19 @@ const Profile = () => {
     setSuccess('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${apiUrl}/api/auth/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
+      const data = await api.put('/auth/profile', formData);
+
+      setUser(data);
+      setSuccess('Profile updated successfully!');
+      setIsEditing(false);
+      setFormData({
+        name: data.name || '',
+        phone: data.phone || '',
+        address: data.address || '',
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUser(data);
-        setSuccess('Profile updated successfully!');
-        setIsEditing(false);
-        setFormData({
-          name: data.name || '',
-          phone: data.phone || '',
-          address: data.address || '',
-        });
-      } else {
-        setError(data.message || 'Failed to update profile');
-      }
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError('Network error. Please try again.');
+      setError(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -200,7 +176,7 @@ const Profile = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+    <Box sx={{ position: 'relative' }}>
       {/* Background Gradient */}
       <Box
         sx={{
@@ -481,21 +457,23 @@ const Profile = () => {
 
                   <Divider sx={{ my: 2, opacity: theme.palette.mode === 'dark' ? 0.3 : 0.15 }} />
 
-                  {/* Quick Stats - vertical layout with icons */}
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, mt: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <BusinessIcon sx={{ color: theme.palette.mode === 'dark' ? '#667eea' : '#38b2ac', fontSize: 22 }} />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: getTextColor(), fontSize: '1rem' }}>
-                        {user.department || 'N/A'}
-                      </Typography>
+                  {/* Quick Stats - only for employees */}
+                  {user.role === 'employee' && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, mt: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <BusinessIcon sx={{ color: theme.palette.mode === 'dark' ? '#667eea' : '#38b2ac', fontSize: 22 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: getTextColor(), fontSize: '1rem' }}>
+                          {user.department?.name || 'N/A'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <WorkIcon sx={{ color: theme.palette.mode === 'dark' ? '#764ba2' : '#f687b3', fontSize: 22 }} />
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: getTextColor(), fontSize: '1rem' }}>
+                          {user.position || 'N/A'}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <WorkIcon sx={{ color: theme.palette.mode === 'dark' ? '#764ba2' : '#f687b3', fontSize: 22 }} />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, color: getTextColor(), fontSize: '1rem' }}>
-                        {user.position || 'N/A'}
-                      </Typography>
-                    </Box>
-                  </Box>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -643,7 +621,7 @@ const Profile = () => {
                   </Card>
                 </Grid>
 
-                {/* Work Information Card */}
+                {/* Work Information Card - Now visible for all roles */}
                 <Grid item xs={12} md={6}>
                   <Card
                     sx={{
@@ -673,7 +651,7 @@ const Profile = () => {
                             Department
                           </Typography>
                           <Typography variant="h6" sx={{ fontWeight: 600, color: theme.palette.mode === 'dark' ? '#667eea' : '#38b2ac', fontSize: { xs: '0.875rem', md: '1rem' } }}>
-                            {user.department || 'Not Assigned'}
+                            {user.department?.name || 'Not Assigned'}
                           </Typography>
                         </Box>
                         

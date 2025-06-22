@@ -41,10 +41,12 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { api } from '../../utils/api';
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [managers, setManagers] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -58,56 +60,33 @@ const Employees = () => {
     joinDate: '',
     phone: '',
     salary: '',
+    manager: '',
   });
   const [searchTerm, setSearchTerm] = useState('');
   const theme = useTheme();
-  const apiUrl = import.meta.env.VITE_API_URL;
 
-  // Fetch employees and departments on component mount
+  // Fetch all data on component mount
   useEffect(() => {
-    fetchEmployees();
-    fetchDepartments();
+    fetchAllData();
   }, []);
 
-  const fetchEmployees = async () => {
+  const fetchAllData = async () => {
+    setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${apiUrl}/api/employees`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setEmployees(data);
-        // Clear passwords when employees are refreshed
-        setPasswords({});
-      } else {
-        console.error('Failed to fetch employees');
-      }
+      const [employeesData, departmentsData, managersData] = await Promise.all([
+        api.get('/employees'),
+        api.get('/departments'),
+        api.get('/managers/list')
+      ]);
+      setEmployees(employeesData);
+      setDepartments(departmentsData);
+      setManagers(managersData);
+      setPasswords({});
     } catch (error) {
-      console.error('Error fetching employees:', error);
-    }
-  };
-
-  const fetchDepartments = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${apiUrl}/api/departments`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setDepartments(data);
-      } else {
-        console.error('Failed to fetch departments');
-      }
-    } catch (error) {
-      console.error('Error fetching departments:', error);
+      console.error('Failed to fetch initial data:', error);
+      setError('Failed to load data. Please refresh the page.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -122,6 +101,7 @@ const Employees = () => {
         joinDate: employee.joinDate ? employee.joinDate.split('T')[0] : '',
         phone: employee.phone || '',
         salary: employee.salary || '',
+        manager: employee.manager?._id || employee.manager || '',
       });
     } else {
       setSelectedEmployee(null);
@@ -133,6 +113,7 @@ const Employees = () => {
         joinDate: '',
         phone: '',
         salary: '',
+        manager: '',
       });
     }
     setError('');
@@ -149,6 +130,7 @@ const Employees = () => {
       joinDate: '',
       phone: '',
       salary: '',
+      manager: '',
     });
     setError('');
     setOpen(false);
@@ -168,37 +150,22 @@ const Employees = () => {
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      const url = selectedEmployee 
-        ? `${apiUrl}/api/employees/${selectedEmployee._id}`
-        : `${apiUrl}/api/employees`;
-      const method = selectedEmployee ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (!selectedEmployee && data.userCredentials) {
-          // Show credentials for new employee
-          alert(`Employee created successfully!\n\nLogin Credentials:\nEmail: ${data.userCredentials.email}\nPassword: ${data.userCredentials.password}\n\nPlease save these credentials and share them with the employee.`);
-        }
-        handleClose();
-        fetchEmployees(); // Refresh the list
-        setPasswords({});
+      let response;
+      if (selectedEmployee) {
+        // Update employee
+        response = await api.put(`/employees/${selectedEmployee._id}`, formData);
       } else {
-        setError(data.message || 'Operation failed');
+        // Create employee
+        response = await api.post('/employees', formData);
+        if (response.userCredentials) {
+          alert(`Employee created successfully!\n\nLogin Credentials:\nEmail: ${response.userCredentials.email}\nPassword: ${response.userCredentials.password}\n\nPlease save these credentials and share them with the employee.`);
+        }
       }
+      handleClose();
+      fetchAllData(); // Refresh all data
     } catch (error) {
-      console.error('Error:', error);
-      setError('Network error. Please try again.');
+      console.error('Error submitting form:', error);
+      setError(error.message || 'Operation failed');
     } finally {
       setLoading(false);
     }
@@ -207,76 +174,35 @@ const Employees = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${apiUrl}/api/employees/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          fetchEmployees(); // Refresh the list
-          // Clear passwords when employee is deleted
-          setPasswords({});
-        } else {
-          console.error('Failed to delete employee');
-        }
+        await api.delete(`/employees/${id}`);
+        fetchAllData(); // Refresh all data
       } catch (error) {
         console.error('Error deleting employee:', error);
+        setError('Failed to delete employee.');
       }
     }
   };
 
   const handleResetPassword = async (id) => {
-    if (window.confirm('Are you sure you want to reset this employee\'s password?')) {
+    if (window.confirm('Are you sure you want to reset the password for this employee?')) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${apiUrl}/api/employees/${id}/reset-password`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          alert(`Password reset successfully!\n\nNew Credentials:\nEmail: ${data.email}\nPassword: ${data.newPassword}\n\nPlease share these new credentials with the employee.`);
-        } else {
-          console.error('Failed to reset password:', data.message);
-        }
+        const data = await api.post(`/employees/${id}/reset-password`);
+        alert(`Password has been reset.\n\nNew Password: ${data.newPassword}\n\nPlease share this with the employee.`);
+        setPasswords(prev => ({ ...prev, [id]: null, show: { ...prev.show, [id]: false } }));
       } catch (error) {
         console.error('Error resetting password:', error);
+        setError('Failed to reset password.');
       }
     }
   };
 
   const handleGetPassword = async (id) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${apiUrl}/api/employees/${id}/password`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Update the passwords state with the new password
-        setPasswords(prev => ({
-          ...prev,
-          [id]: data.password
-        }));
-      } else {
-        console.error('Failed to get password:', data.message);
-        alert('Failed to get password: ' + data.message);
-      }
+      const data = await api.get(`/employees/${id}/password`);
+      setPasswords(prev => ({ ...prev, [id]: data.password, show: { ...prev.show, [id]: true } }));
     } catch (error) {
       console.error('Error getting password:', error);
-      alert('Error getting password. Please try again.');
+      setError('Failed to get password.');
     }
   };
 
@@ -703,6 +629,20 @@ const Employees = () => {
               value={formData.salary}
               onChange={handleInputChange}
             />
+            <TextField
+              margin="normal"
+              label="Manager"
+              name="manager"
+              value={formData.manager}
+              onChange={handleInputChange}
+              fullWidth
+              select
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {managers.map(manager => (
+                <MenuItem key={manager._id} value={manager._id}>{manager.name}</MenuItem>
+              ))}
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions>

@@ -93,29 +93,28 @@ exports.login = async (req, res) => {
 // Get current user profile
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
-    
-    // For employees, get additional data from Employee collection
+    let user = await User.findById(req.user._id).select('-password').populate('department');
+
     if (user.role === 'employee') {
-      const employee = await Employee.findOne({ email: user.email }).populate('department');
+      const employee = await Employee.findOne({ email: user.email }).populate('department').populate('manager');
       if (employee) {
+        // For employees, the Employee record is the source of truth for these details.
         const profileData = {
           ...user.toObject(),
           employeeId: employee._id,
           phone: employee.phone,
           position: employee.position,
-          department: employee.department?.name || '',
+          department: employee.department, // This now comes populated
+          manager: employee.manager,
           salary: employee.salary,
           joinDate: employee.joinDate,
           address: employee.address,
-          profilePhoto: employee.profilePhoto,
-          lastLogin: user.lastLogin
         };
-        console.log('Profile data for employee:', profileData); // Debug log
         return res.json(profileData);
       }
     }
     
+    // For non-employees, the User record is the source of truth.
     res.json(user);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -125,61 +124,49 @@ exports.getProfile = async (req, res) => {
 // Update current user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, phone, address } = req.body;
+    const { name, phone, address, department, position, salary } = req.body;
     
-    // Update user basic info
+    // Consolidate update data
+    const updateData = { name, phone, address, department, position, salary };
+
+    // Update user basic info on the main User model for everyone
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { name },
+      updateData,
       { new: true, runValidators: true }
     ).select('-password');
     
-    // For employees, update employee data
+    // If the user is also an employee, sync changes to the separate Employee record
     if (user.role === 'employee') {
-      const updateData = {
-        phone: phone,
-        address: address
-      };
+      await Employee.findOneAndUpdate(
+        { email: user.email },
+        { $set: updateData },
+        { new: true, runValidators: true }
+      );
+    }
+    
+    // After updating, refetch the complete profile to ensure consistency
+    let finalUser = await User.findById(req.user._id).select('-password').populate('department');
 
-      console.log('--- DEBUG: Incoming updateProfile fields ---');
-      console.log('phone:', phone, typeof phone);
-      console.log('address:', address, typeof address);
-      console.log('Full updateData:', updateData);
-
-      console.log('Attempting to update Employee with:', updateData);
-      const beforeEmployee = await Employee.findOne({ email: user.email });
-      console.log('Employee before update:', beforeEmployee);
-
-      if (Object.keys(updateData).length > 0) {
-        await Employee.findOneAndUpdate(
-          { email: user.email },
-          { $set: updateData },
-          { new: true, runValidators: true, upsert: true }
-        );
-      }
-
-      const afterEmployee = await Employee.findOne({ email: user.email });
-      console.log('Employee after update:', afterEmployee);
-      // Get updated employee data
-      const employee = await Employee.findOne({ email: user.email }).populate('department');
+    if (finalUser.role === 'employee') {
+      const employee = await Employee.findOne({ email: finalUser.email }).populate('department').populate('manager');
       if (employee) {
-        const updatedProfileData = {
-          ...user.toObject(),
+        const profileData = {
+          ...finalUser.toObject(),
           employeeId: employee._id,
           phone: employee.phone,
           position: employee.position,
-          department: employee.department?.name || '',
+          department: employee.department,
+          manager: employee.manager,
           salary: employee.salary,
           joinDate: employee.joinDate,
           address: employee.address,
-          profilePhoto: employee.profilePhoto
         };
-        console.log('Updated profile data for employee:', updatedProfileData); // Debug log
-        return res.json(updatedProfileData);
+        return res.json(profileData);
       }
     }
-    
-    res.json(user);
+
+    res.json(finalUser);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

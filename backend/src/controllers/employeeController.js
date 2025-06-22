@@ -1,3 +1,4 @@
+console.log('>>> employeeController.js loaded');
 const Employee = require('../models/Employee');
 const User = require('../models/User');
 const crypto = require('crypto');
@@ -14,6 +15,11 @@ exports.createEmployee = async (req, res) => {
     const employeeData = { ...req.body };
     if (employeeData.joinDate) {
       employeeData.joinDate = new Date(employeeData.joinDate);
+    }
+    
+    // Handle manager assignment
+    if (!employeeData.manager || employeeData.manager === '') {
+      employeeData.manager = null;
     }
 
     // Remove file upload logic
@@ -32,8 +38,9 @@ exports.createEmployee = async (req, res) => {
     });
     await user.save();
     
-    // Populate department for response
+    // Populate department and manager for response
     await employee.populate('department');
+    await employee.populate('manager');
     
     res.status(201).json({
       employee,
@@ -51,7 +58,7 @@ exports.createEmployee = async (req, res) => {
 // Get all employees
 exports.getAllEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find().populate('department');
+    const employees = await Employee.find().populate('department').populate('manager');
     res.status(200).json(employees);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -74,33 +81,33 @@ exports.getEmployeeById = async (req, res) => {
 // Update employee
 exports.updateEmployee = async (req, res) => {
   try {
-    // Convert joinDate string to Date object if provided
     const updateData = { ...req.body };
-    if (updateData.joinDate) {
-      updateData.joinDate = new Date(updateData.joinDate);
+    
+    // This is the important part: handle manager assignment
+    if (updateData.manager === '') {
+      updateData.manager = null;
     }
-    
+
     const employee = await Employee.findByIdAndUpdate(
-      req.params.id, 
-      updateData, 
+      req.params.id,
+      updateData,
       { new: true, runValidators: true }
-    ).populate('department');
-    
+    ).populate('department').populate('manager');
+
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
-    
+
     // Update user account if email changed
     if (updateData.email) {
-      await User.findOneAndUpdate(
-        { email: employee.email },
-        { 
-          name: employee.name,
-          email: employee.email 
-        }
-      );
+      const user = await User.findOne({ email: employee.email });
+      if (user) {
+        user.name = employee.name;
+        user.email = employee.email;
+        await user.save();
+      }
     }
-    
+
     res.status(200).json(employee);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -182,6 +189,22 @@ exports.getEmployeePassword = async (req, res) => {
       email: employee.email,
       password: newPassword
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get employees assigned to the logged-in manager
+exports.getEmployeesByManager = async (req, res) => {
+  try {
+    console.log('🔵 [getEmployeesByManager] Called by user:', req.user);
+    if (req.user.role !== 'manager') {
+      console.log('🔴 [getEmployeesByManager] Forbidden: Not a manager');
+      return res.status(403).json({ message: 'Only managers can access this endpoint.' });
+    }
+    const employees = await Employee.find({ manager: req.user._id }).populate('department');
+    console.log('🟢 [getEmployeesByManager] Employees found:', employees);
+    res.status(200).json(employees);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

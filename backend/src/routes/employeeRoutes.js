@@ -8,14 +8,23 @@ const {
   updateEmployee,
   deleteEmployee,
   resetPassword,
-  getEmployeePassword
+  getEmployeePassword,
+  getEmployeesByManager
 } = require('../controllers/employeeController');
+
+console.log('>>> employeeRoutes.js loaded');
 
 // Create a new employee (admin only)
 router.post('/', auth, authorize('admin'), createEmployee);
 
 // Get all employees (admin, hr)
 router.get('/', auth, authorize('admin', 'hr'), getAllEmployees);
+
+// Get employees assigned to the logged-in manager
+router.get('/assigned', (req, res, next) => {
+  console.log('>>> /api/employees/assigned route hit');
+  next();
+}, auth, getEmployeesByManager);
 
 // Get employee by ID (admin, hr)
 router.get('/:id', auth, authorize('admin', 'hr'), getEmployeeById);

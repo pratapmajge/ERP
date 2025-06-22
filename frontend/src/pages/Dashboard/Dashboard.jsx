@@ -2,6 +2,7 @@ import React from 'react';
 import AdminDashboard from './AdminDashboard';
 import HRDashboard from './HRDashboard';
 import EmployeeDashboard from './EmployeeDashboard';
+import ManagerDashboard from './ManagerDashboard';
 import { getUser } from '../../utils/auth';
 
 const Dashboard = () => {
@@ -22,6 +23,8 @@ const Dashboard = () => {
       return <HRDashboard />;
     case 'employee':
       return <EmployeeDashboard />;
+    case 'manager':
+      return <ManagerDashboard />;
     default:
       return <div>Unauthorized</div>;
   }

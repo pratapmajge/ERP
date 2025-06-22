@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Grid, Card, CardContent, IconButton, Tooltip } from '@mui/material';
+import { useOutletContext } from 'react-router-dom';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 import { Brightness4, Brightness7, AccountCircle, AssignmentInd, MonetizationOn, AccessTime } from '@mui/icons-material';
 
@@ -12,15 +13,16 @@ const summary = [
 const EmployeeDashboard = () => {
   const { isDarkMode, toggleTheme } = useCustomTheme();
   const themeMode = isDarkMode ? 'dark' : 'light';
+  const { userProfile } = useOutletContext();
 
   return (
     <Box>
       <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
-        Welcome!
+        Welcome, {userProfile?.name}!
       </Typography>
       <Grid container spacing={3}>
         {summary.map((item) => (
-          <Grid item xs={12} sm={6} md={4} key={item.title}>
+          <Grid xs={12} sm={6} md={4} key={item.title}>
             <Card>
               <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 {item.icon}

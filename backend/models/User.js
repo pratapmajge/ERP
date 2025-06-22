@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'manager', 'employee'],
     default: 'employee'
   },
+  manager: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   department: {
     type: String,
     required: [true, 'Please specify department']
