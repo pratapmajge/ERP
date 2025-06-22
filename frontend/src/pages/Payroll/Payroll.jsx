@@ -135,7 +135,7 @@ const StatCard = ({ title, value, icon, color }) => {
 
 const Payroll = () => {
   const [payroll, setPayroll] = useState([]);
-  const [employees, setEmployees] = useState([]);
+  const [payees, setPayees] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -154,14 +154,14 @@ const Payroll = () => {
   const theme = useTheme();
   const user = getUser();
   const isEmployee = user?.role === 'employee';
+  const isManager = user?.role === 'manager';
 
   useEffect(() => {
-    if (isEmployee) {
-      console.log('[Payroll] Employee user._id:', user?._id);
+    if (isEmployee || isManager) {
       fetchEmployeePayroll();
     } else {
       fetchPayroll();
-      fetchEmployees();
+      fetchPayees();
     }
   }, []);
 
@@ -205,18 +205,18 @@ const Payroll = () => {
     }
   };
 
-  const fetchEmployees = async () => {
+  const fetchPayees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/employees', {
+      const response = await fetch('http://localhost:5001/api/users/payees', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (response.ok) {
         const data = await response.json();
-        setEmployees(data);
+        setPayees(data);
       }
     } catch (error) {
-      console.error('Error fetching employees:', error);
+      console.error('Error fetching payees:', error);
     }
   };
 
@@ -334,8 +334,8 @@ const Payroll = () => {
     );
   });
 
-  if (isEmployee) {
-    // Employee view: show all payroll records (history) as cards
+  if (isEmployee || isManager) {
+    // Employee or Manager view: show all payroll records (history) as cards
     return (
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 3 }}>
@@ -508,8 +508,7 @@ const Payroll = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Employee Name</TableCell>
-                  <TableCell>Department</TableCell>
+                  <TableCell>Name</TableCell>
                   <TableCell>Basic Salary</TableCell>
                   <TableCell>Allowances</TableCell>
                   <TableCell>Deductions</TableCell>
@@ -524,12 +523,11 @@ const Payroll = () => {
               <TableBody>
                 {filteredPayroll.map((record) => (
                   <TableRow key={record._id}>
-                    <TableCell>{record.employee?.name || '-'}</TableCell>
-                    <TableCell>{record.employee?.department?.name || '-'}</TableCell>
-                    <TableCell>${record.basicSalary}</TableCell>
-                    <TableCell>${record.allowances}</TableCell>
-                    <TableCell>${record.deductions}</TableCell>
-                    <TableCell>${record.netSalary}</TableCell>
+                    <TableCell>{record.employee?.name || 'N/A'}</TableCell>
+                    <TableCell>${record.basicSalary.toLocaleString()}</TableCell>
+                    <TableCell>${record.allowances.toLocaleString()}</TableCell>
+                    <TableCell>${record.deductions.toLocaleString()}</TableCell>
+                    <TableCell>${record.netSalary.toLocaleString()}</TableCell>
                     <TableCell>
                       <StatusChip status={record.status} />
                     </TableCell>
@@ -569,16 +567,16 @@ const Payroll = () => {
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               select
-              label="Employee"
-              name="employee"
+              label="Employee/Manager"
               value={formData.employee}
               onChange={handleInputChange}
+              name="employee"
               fullWidth
-              required
+              margin="normal"
             >
-              {employees.map((emp) => (
-                <MenuItem key={emp._id} value={emp._id}>
-                  {emp.name} ({emp.department?.name || '-'})
+              {payees.map((p) => (
+                <MenuItem key={p._id} value={p._id}>
+                  {p.name} ({p.role})
                 </MenuItem>
               ))}
             </TextField>

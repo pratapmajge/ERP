@@ -8,9 +8,13 @@ const payrollRoutes = require('./payrollRoutes');
 const authRoutes = require('./authRoutes');
 const managerRoutes = require('./managerRoutes');
 const progressRoutes = require('./progressRoutes');
+const userRoutes = require('./userRoutes');
 
 // Authentication routes
 router.use('/auth', authRoutes);
+
+// User routes (for general user actions)
+router.use('/users', userRoutes);
 
 // Employee routes
 router.use('/employees', employeeRoutes);

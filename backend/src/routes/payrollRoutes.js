@@ -25,6 +25,9 @@ router.put('/:id', auth, authorize('admin'), updatePayroll);
 // Delete payroll (admin only)
 router.delete('/:id', auth, authorize('admin'), deletePayroll);
 
+// Get payroll for the logged-in user
+router.get('/employee/me', auth, getPayrollByEmployee);
+
 // Get payroll records for a specific employee (admin, hr, or the employee themselves)
 router.get('/employee/:employeeId', auth, getPayrollByEmployee);
 

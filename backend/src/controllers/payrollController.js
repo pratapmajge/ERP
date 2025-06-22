@@ -17,11 +17,7 @@ exports.createPayroll = async (req, res) => {
 exports.getAllPayrolls = async (req, res) => {
   try {
     const payrolls = await Payroll.find()
-      .populate({
-        path: 'employee',
-        populate: { path: 'department', select: 'name' },
-        select: 'name department',
-      });
+      .populate('employee', 'name');
     res.status(200).json(payrolls);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -32,11 +28,7 @@ exports.getAllPayrolls = async (req, res) => {
 exports.getPayrollById = async (req, res) => {
   try {
     const payroll = await Payroll.findById(req.params.id)
-      .populate({
-        path: 'employee',
-        populate: { path: 'department', select: 'name' },
-        select: 'name department',
-      });
+      .populate('employee', 'name');
     if (!payroll) {
       return res.status(404).json({ message: 'Payroll record not found' });
     }
@@ -73,20 +65,21 @@ exports.deletePayroll = async (req, res) => {
   }
 };
 
-// Get payroll records for a specific employee
+// Get payroll records for a specific employee or the logged-in user
 exports.getPayrollByEmployee = async (req, res) => {
   try {
     const { employeeId } = req.params;
+    const userId = employeeId || req.user.id; // Use param ID or fallback to logged-in user's ID
     const { month, year } = req.query;
-    const filter = { employee: employeeId };
+
+    const filter = { employee: userId };
     if (month) filter.month = Number(month);
     if (year) filter.year = Number(year);
+
     const payrolls = await Payroll.find(filter)
-      .populate({
-        path: 'employee',
-        populate: { path: 'department', select: 'name' },
-        select: 'name department',
-      });
+      .populate('employee', 'name')
+      .sort({ year: -1, month: -1 }); // Sort by most recent first
+
     res.status(200).json(payrolls);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -197,15 +197,9 @@ exports.getEmployeePassword = async (req, res) => {
 // Get employees assigned to the logged-in manager
 exports.getEmployeesByManager = async (req, res) => {
   try {
-    console.log('🔵 [getEmployeesByManager] Called by user:', req.user);
-    if (req.user.role !== 'manager') {
-      console.log('🔴 [getEmployeesByManager] Forbidden: Not a manager');
-      return res.status(403).json({ message: 'Only managers can access this endpoint.' });
-    }
     const employees = await Employee.find({ manager: req.user._id }).populate('department');
-    console.log('🟢 [getEmployeesByManager] Employees found:', employees);
     res.status(200).json(employees);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}; 
+};

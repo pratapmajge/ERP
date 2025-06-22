@@ -95,7 +95,7 @@ const ManageTasks = () => {
   };
 
   const progressByEmployee = employees.reduce((acc, emp) => {
-    acc[emp._id] = progress.filter((p) => p.employee._id === emp._id);
+    acc[emp._id] = progress.filter((p) => p.employee._id === emp._id && !p.managerCompleted);
     return acc;
   }, {});
 
@@ -122,6 +122,8 @@ const ManageTasks = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
+                    <TableCell>#</TableCell>
+                    <TableCell>Project</TableCell>
                     <TableCell>Task</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Due Date</TableCell>
@@ -130,8 +132,10 @@ const ManageTasks = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {progressByEmployee[emp._id]?.length ? progressByEmployee[emp._id].map((task) => (
+                  {progressByEmployee[emp._id]?.length ? progressByEmployee[emp._id].map((task, idx) => (
                     <TableRow key={task._id}>
+                      <TableCell>{idx + 1}</TableCell>
+                      <TableCell>{task.project}</TableCell>
                       <TableCell>{task.task}</TableCell>
                       <TableCell>{task.status}</TableCell>
                       <TableCell>{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}</TableCell>
@@ -143,10 +147,23 @@ const ManageTasks = () => {
                       </TableCell>
                       <TableCell>
                         <Button variant="text" size="small" onClick={() => handleOpenEditDialog(task)}>Edit</Button>
+                        <Button variant="contained" size="small" color="success" sx={{ ml: 1 }} onClick={async () => {
+                          setSubmitting(true);
+                          try {
+                            await api.put(`/progress/${task._id}`, { ...task, managerCompleted: true });
+                            fetchAll();
+                          } catch (error) {
+                            console.error('Failed to mark as completed:', error);
+                          } finally {
+                            setSubmitting(false);
+                          }
+                        }}>
+                          Mark as Completed
+                        </Button>
                       </TableCell>
                     </TableRow>
                   )) : (
-                    <TableRow><TableCell colSpan={5} sx={{ textAlign: 'center' }}>No tasks yet.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} sx={{ textAlign: 'center' }}>No tasks yet.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

@@ -6,8 +6,8 @@ const { createProgress, updateProgress, getProgressForManager, getProgressForEmp
 // Create a new progress/task (manager only)
 router.post('/', auth, authorize('manager'), createProgress);
 
-// Update a progress/task (manager only)
-router.put('/:id', auth, authorize('manager'), updateProgress);
+// Update a progress/task (manager or the assigned employee)
+router.put('/:id', auth, authorize('manager', 'employee'), updateProgress);
 
 // Get all progress for manager's employees (manager only)
 router.get('/', auth, authorize('manager'), getProgressForManager);

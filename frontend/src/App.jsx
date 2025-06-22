@@ -21,6 +21,7 @@ import ManageTasks from './pages/ManageTasks';
 import MyTasks from './pages/MyTasks';
 import NotFound from './pages/NotFound/NotFound';
 import MyEmployees from './pages/MyEmployees/MyEmployees';
+import CompletedTasks from './pages/CompletedTasks';
 
 // Component to handle automatic token clearing
 const AuthManager = ({ children }) => {
@@ -84,9 +85,10 @@ const App = () => {
                 <Route path="managers" element={<ProtectedRoute requiredRole="admin"><Managers /></ProtectedRoute>} />
                 <Route path="departments" element={<ProtectedRoute requiredRole="admin"><Departments /></ProtectedRoute>} />
                 <Route path="attendance" element={<ProtectedRoute requiredRole={['admin', 'hr', 'employee']}><Attendance /></ProtectedRoute>} />
-                <Route path="payroll" element={<ProtectedRoute requiredRole="admin"><Payroll /></ProtectedRoute>} />
+                <Route path="payroll" element={<ProtectedRoute requiredRole={['admin', 'employee', 'manager']}><Payroll /></ProtectedRoute>} />
                 <Route path="profile" element={<ProtectedRoute requiredRole={['admin', 'employee', 'manager']}><Profile /></ProtectedRoute>} />
                 <Route path="manage-tasks" element={<ProtectedRoute requiredRole="manager"><ManageTasks /></ProtectedRoute>} />
+                <Route path="completed-tasks" element={<ProtectedRoute requiredRole="manager"><CompletedTasks /></ProtectedRoute>} />
                 <Route path="my-employees" element={<ProtectedRoute requiredRole="manager"><MyEmployees /></ProtectedRoute>} />
                 <Route path="my-tasks" element={<ProtectedRoute requiredRole="employee"><MyTasks /></ProtectedRoute>} />
               </Route>

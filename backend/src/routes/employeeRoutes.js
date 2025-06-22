@@ -21,10 +21,7 @@ router.post('/', auth, authorize('admin'), createEmployee);
 router.get('/', auth, authorize('admin', 'hr'), getAllEmployees);
 
 // Get employees assigned to the logged-in manager
-router.get('/assigned', (req, res, next) => {
-  console.log('>>> /api/employees/assigned route hit');
-  next();
-}, auth, getEmployeesByManager);
+router.get('/assigned', auth, authorize('manager'), getEmployeesByManager);
 
 // Get employee by ID (admin, hr)
 router.get('/:id', auth, authorize('admin', 'hr'), getEmployeeById);

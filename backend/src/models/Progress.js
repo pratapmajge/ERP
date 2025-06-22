@@ -32,6 +32,10 @@ const progressSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  managerCompleted: {
+    type: Boolean,
+    default: false
   }
 });
 

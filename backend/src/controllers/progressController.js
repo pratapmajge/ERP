@@ -35,17 +35,21 @@ exports.updateProgress = async (req, res) => {
 
     // Managers can update task details
     if (isManager) {
-      const { project, task, dueDate } = req.body;
+      const { project, task, dueDate, progress, status, managerCompleted } = req.body;
       if (project !== undefined) progressEntry.project = project;
       if (task !== undefined) progressEntry.task = task;
       if (dueDate !== undefined) progressEntry.dueDate = dueDate;
+      if (progress !== undefined) progressEntry.progress = progress;
+      if (status !== undefined) progressEntry.status = status;
+      if (managerCompleted !== undefined) progressEntry.managerCompleted = managerCompleted;
     }
 
     // Employees can update their own progress
     if (isOwner) {
-      const { progress, status } = req.body;
+      const { progress, status, managerCompleted } = req.body;
       if (progress !== undefined) progressEntry.progress = progress;
       if (status !== undefined) progressEntry.status = status;
+      if (managerCompleted !== undefined) progressEntry.managerCompleted = managerCompleted;
     }
 
     await progressEntry.save();

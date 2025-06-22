@@ -38,6 +38,7 @@ import {
   Person as PersonIcon,
   Assignment as AssignmentIcon,
   Task as TaskIcon,
+  CheckCircle,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTheme as useCustomTheme } from '../../context/ThemeContext';
@@ -106,6 +107,8 @@ const Layout = () => {
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/app' },
       { text: 'My Employees', icon: <PeopleIcon />, path: '/app/my-employees' },
       { text: 'Manage Tasks', icon: <TaskIcon />, path: '/app/manage-tasks' },
+      { text: 'Completed Tasks', icon: <CheckCircle />, path: '/app/completed-tasks' },
+      { text: 'Payroll', icon: <MoneyIcon />, path: '/app/payroll' },
       { text: 'My Profile', icon: <AccountCircleIcon />, path: '/app/profile' },
     ];
   } else if (role === 'employee') {

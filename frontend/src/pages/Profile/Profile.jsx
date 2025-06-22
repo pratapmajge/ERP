@@ -43,6 +43,7 @@ const Profile = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [payroll, setPayroll] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -53,6 +54,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchUserProfile();
+    fetchUserPayroll();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -67,6 +69,18 @@ const Profile = () => {
       });
     } catch (error) {
       console.error('Error fetching user profile:', error);
+    }
+  };
+
+  const fetchUserPayroll = async () => {
+    try {
+      const payrollData = await api.get('/payroll/employee/me'); // Assuming an endpoint that gets payroll for the logged-in user
+      if (payrollData && payrollData.length > 0) {
+        // Assuming the latest record is what we want
+        setPayroll(payrollData[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching user payroll:', error);
     }
   };
 
@@ -669,7 +683,7 @@ const Profile = () => {
                             Salary
                           </Typography>
                           <Typography variant="h6" sx={{ fontWeight: 600, color: '#48bb78', fontSize: { xs: '0.875rem', md: '1rem' } }}>
-                            {user.salary ? (typeof user.salary === 'number' ? `$${user.salary.toLocaleString()}` : `$${user.salary}`) : 'Not Set'}
+                            {payroll ? `$${payroll.netSalary.toLocaleString()}` : 'Not Set'}
                           </Typography>
                         </Box>
                       </Box>
