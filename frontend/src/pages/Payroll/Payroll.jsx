@@ -157,9 +157,12 @@ const Payroll = () => {
   const isManager = user?.role === 'manager';
 
   useEffect(() => {
+    console.log('[Payroll][DEBUG] Component mounted, user role:', user?.role);
     if (isEmployee || isManager) {
+      console.log('[Payroll][DEBUG] Fetching employee payroll...');
       fetchEmployeePayroll();
     } else {
+      console.log('[Payroll][DEBUG] Fetching all payroll data...');
       fetchPayroll();
       fetchPayees();
     }
@@ -183,22 +186,30 @@ const Payroll = () => {
   const fetchEmployeePayroll = async () => {
     try {
       const token = localStorage.getItem('token');
-      const now = new Date();
-      const month = now.getMonth() + 1;
-      const year = now.getFullYear();
-      const employeeId = user.employeeId || user._id;
-      const apiUrl = `http://localhost:5001/api/payroll/employee/${employeeId}?month=${month}&year=${year}`;
-      console.log('[Payroll][DEBUG] employeeId:', employeeId);
-      console.log('[Payroll][DEBUG] API URL:', apiUrl);
+      console.log('[Payroll][DEBUG] User object:', user);
+      
+      // Always use the user's _id for employees
+      const employeeId = user._id;
+      console.log('[Payroll][DEBUG] Using employeeId:', employeeId);
+      
+      const apiUrl = `http://localhost:5001/api/payroll/employee/${employeeId}`;
+      console.log('[Payroll][DEBUG] Making request to:', apiUrl);
+      
       const response = await fetch(apiUrl, {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       });
+      
+      console.log('[Payroll][DEBUG] Response status:', response.status);
+      const data = await response.json();
+      console.log('[Payroll][DEBUG] Response data:', data);
+      
       if (response.ok) {
-        const data = await response.json();
-        console.log('[Payroll][DEBUG] API response:', data);
         setPayroll(data);
       } else {
-        console.log('[Payroll][DEBUG] API error:', response.status);
+        console.error('[Payroll][DEBUG] Error response:', data);
       }
     } catch (error) {
       console.error('[Payroll][DEBUG] Error fetching employee payroll:', error);
@@ -277,10 +288,19 @@ const Payroll = () => {
         ? `http://localhost:5001/api/payroll/${selectedRecord._id}`
         : 'http://localhost:5001/api/payroll';
       const method = selectedRecord ? 'PUT' : 'POST';
-      const body = { ...formData };
+      
+      // Ensure we're using the correct employee ID from the form data
+      const body = { 
+        ...formData,
+        employee: formData.employee // This should be the user._id from the employee selection
+      };
+      
       if (body.paymentDate instanceof Date) {
         body.paymentDate = body.paymentDate.toISOString();
       }
+
+      console.log('[Payroll][DEBUG] Submitting payroll with data:', body);
+      
       const response = await fetch(url, {
         method,
         headers: {
@@ -289,12 +309,22 @@ const Payroll = () => {
         },
         body: JSON.stringify(body),
       });
+      
       if (response.ok) {
-        fetchPayroll();
+        const result = await response.json();
+        console.log('[Payroll][DEBUG] Payroll saved successfully:', result);
+        if (isEmployee || isManager) {
+          fetchEmployeePayroll();
+        } else {
+          fetchPayroll();
+        }
         handleClose();
+      } else {
+        const error = await response.json();
+        console.error('[Payroll][DEBUG] Error saving payroll:', error);
       }
     } catch (error) {
-      console.error('Error saving payroll:', error);
+      console.error('[Payroll][DEBUG] Error in handleSubmit:', error);
     }
   };
 

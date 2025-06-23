@@ -4,11 +4,26 @@ const Payroll = require('../models/Payroll');
 exports.createPayroll = async (req, res) => {
   try {
     const payrollData = { ...req.body };
-    // If status or paymentDate are not provided, defaults will be used by the model
+    console.log('[PayrollController] Creating payroll with data:', payrollData);
+    
+    if (!payrollData.employee) {
+      throw new Error('Employee ID is required');
+    }
+
+    // Validate that the employee exists
+    const User = require('../models/User');
+    const employee = await User.findById(payrollData.employee);
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
     const payroll = new Payroll(payrollData);
     await payroll.save();
+    console.log('[PayrollController] Created payroll:', payroll);
+    
     res.status(201).json(payroll);
   } catch (error) {
+    console.error('[PayrollController] Error creating payroll:', error);
     res.status(400).json({ message: error.message });
   }
 };
@@ -69,19 +84,28 @@ exports.deletePayroll = async (req, res) => {
 exports.getPayrollByEmployee = async (req, res) => {
   try {
     const { employeeId } = req.params;
-    const userId = employeeId || req.user.id; // Use param ID or fallback to logged-in user's ID
-    const { month, year } = req.query;
+    const userId = employeeId || req.user.id;
+    console.log('[PayrollController] Searching for payroll with employeeId:', userId);
+
+    // Validate that the employee exists
+    const User = require('../models/User');
+    const employee = await User.findById(userId);
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
 
     const filter = { employee: userId };
-    if (month) filter.month = Number(month);
-    if (year) filter.year = Number(year);
+    console.log('[PayrollController] Using filter:', filter);
 
     const payrolls = await Payroll.find(filter)
-      .populate('employee', 'name')
-      .sort({ year: -1, month: -1 }); // Sort by most recent first
+      .populate('employee', 'name email')
+      .sort({ year: -1, month: -1 });
+
+    console.log('[PayrollController] Found payrolls:', payrolls);
 
     res.status(200).json(payrolls);
   } catch (error) {
+    console.error('[PayrollController] Error:', error);
     res.status(500).json({ message: error.message });
   }
 }; 
