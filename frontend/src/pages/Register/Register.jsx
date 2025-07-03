@@ -97,7 +97,7 @@ const Register = () => {
     if (Object.keys(newErrors).length === 0) {
       setLoading(true);
       try {
-        const response = await fetch(`${apiUrl}/api/auth/register`, {
+        const response = await fetch(`${apiUrl}/api/auth/register-request`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -108,7 +108,7 @@ const Register = () => {
         });
         const data = await response.json();
         if (response.ok) {
-          navigate('/login', { state: { message: 'Registration successful! Please login with your credentials.' } });
+          navigate('/login', { state: { message: 'Registration request submitted. Await admin approval.' } });
         } else {
           clearAuth();
           setErrors({ general: data.message || 'Registration failed' });

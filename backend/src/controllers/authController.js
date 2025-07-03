@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Employee = require('../models/Employee');
+const RegistrationRequest = require('../models/RegistrationRequest');
+const bcrypt = require('bcryptjs');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -167,6 +169,100 @@ exports.updateProfile = async (req, res) => {
     }
 
     res.json(finalUser);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Submit a registration request
+exports.registerRequest = async (req, res) => {
+  try {
+    const { name, email, password, role, phone, address, department, position } = req.body;
+    // Check if user or request already exists
+    const userExists = await User.findOne({ email });
+    const requestExists = await RegistrationRequest.findOne({ email, status: 'pending' });
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+    if (requestExists) {
+      return res.status(400).json({ message: 'A registration request for this email is already pending' });
+    }
+    // Hash password before saving
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const request = await RegistrationRequest.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || 'employee',
+      phone,
+      address,
+      department,
+      position
+    });
+    res.status(201).json({ message: 'Registration request submitted. Await admin approval.' });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// List all pending registration requests (admin only)
+exports.listRegistrationRequests = async (req, res) => {
+  try {
+    const requests = await RegistrationRequest.find({ status: 'pending' }).populate('department');
+    res.json(requests);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Approve a registration request (admin only)
+exports.approveRegistrationRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const request = await RegistrationRequest.findById(id);
+    if (!request || request.status !== 'pending') {
+      return res.status(404).json({ message: 'Request not found or already processed' });
+    }
+    // Check if user already exists
+    const userExists = await User.findOne({ email: request.email });
+    if (userExists) {
+      request.status = 'rejected';
+      request.adminNote = 'User already exists';
+      await request.save();
+      return res.status(400).json({ message: 'User already exists' });
+    }
+    // Create user
+    const user = await User.create({
+      name: request.name,
+      email: request.email,
+      password: request.password, // already hashed
+      role: request.role,
+      phone: request.phone,
+      address: request.address,
+      department: request.department,
+      position: request.position
+    });
+    request.status = 'approved';
+    await request.save();
+    res.json({ message: 'Registration request approved and user created', user });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Reject a registration request (admin only)
+exports.rejectRegistrationRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { adminNote } = req.body;
+    const request = await RegistrationRequest.findById(id);
+    if (!request || request.status !== 'pending') {
+      return res.status(404).json({ message: 'Request not found or already processed' });
+    }
+    request.status = 'rejected';
+    request.adminNote = adminNote || '';
+    await request.save();
+    res.json({ message: 'Registration request rejected' });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

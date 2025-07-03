@@ -22,6 +22,7 @@ import MyTasks from './pages/MyTasks';
 import NotFound from './pages/NotFound/NotFound';
 import MyEmployees from './pages/MyEmployees/MyEmployees';
 import CompletedTasks from './pages/CompletedTasks';
+import Requests from './pages/Admin/Requests';
 
 // Component to handle automatic token clearing
 const AuthManager = ({ children }) => {
@@ -91,6 +92,7 @@ const App = () => {
                 <Route path="completed-tasks" element={<ProtectedRoute requiredRole="manager"><CompletedTasks /></ProtectedRoute>} />
                 <Route path="my-employees" element={<ProtectedRoute requiredRole="manager"><MyEmployees /></ProtectedRoute>} />
                 <Route path="my-tasks" element={<ProtectedRoute requiredRole="employee"><MyTasks /></ProtectedRoute>} />
+                <Route path="requests" element={<ProtectedRoute requiredRole="admin"><Requests /></ProtectedRoute>} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

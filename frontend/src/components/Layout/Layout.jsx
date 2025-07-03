@@ -101,6 +101,7 @@ const Layout = () => {
       { text: 'Departments', icon: <BusinessIcon />, path: '/app/departments' },
       { text: 'Attendance', icon: <AccessTimeIcon />, path: '/app/attendance' },
       { text: 'Payroll', icon: <MoneyIcon />, path: '/app/payroll' },
+      ...(role === 'admin' ? [{ text: 'Requests', icon: <AssignmentIcon />, path: '/app/requests' }] : []),
     ];
   } else if (role === 'manager') {
     roleMenuItems = [
