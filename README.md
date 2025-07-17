@@ -1,3 +1,31 @@
-- ![image](https://github.com/user-attachments/assets/3c0e82b7-f6cc-4dff-a2ab-781692bc2051)
+# 🏢 ERP System for Companies and Industries
 
-![image](https://github.com/user-attachments/assets/5a19d3e6-f9ea-480f-bcca-20446970f141)
+A full-featured ERP system built with the MERN stack to manage tasks, employees, and salary details for organizations.
+
+## 🔧 Tech Stack
+- MongoDB
+- Express.js
+- React.js
+- Node.js
+- Tailwind CSS
+- JWT Authentication
+
+## 🚀 Features
+- User authentication (Admin, Manager, Employee)
+- Task management
+- Employee salary & attendance tracking
+- Secure login with JWT
+- Clean and responsive UI
+
+## 📷 Screenshots
+> Add screenshots to a folder called `screenshots/` and update these paths
+
+![Dashboard](screenshots/dashboard.png)
+![Employee List](screenshots/employees.png)
+![Task Module](screenshots/tasks.png)
+
+## 🛠️ How to Run
+
+```bash
+git clone https://github.com/YOUR_GITHUB_USERNAME/ERP.git
+cd ERP
