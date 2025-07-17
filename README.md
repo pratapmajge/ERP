@@ -25,19 +25,6 @@ A complete **Employee Resource Planning (ERP)** system built using the **MERN st
 
 ---
 
-## 📸 Screenshots
-
-### Dashboard
-![Dashboard](screenshots/dashboard.png)
-
-### Employee List
-![Employee List](screenshots/employee-list.png)
-
-### Task Module
-![Task Module](screenshots/task-module.png)
-
----
-
 ## 🛠️ Installation
 
 Make sure you have **Node.js**, **MongoDB**, and **npm** or **yarn** installed.
