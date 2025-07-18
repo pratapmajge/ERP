@@ -25,23 +25,20 @@ A complete **Employee Resource Planning (ERP)** system built using the **MERN st
 
 ---
 ## Screenshots
-<img width="1919" height="980" alt="image" src="https://github.com/user-attachments/assets/09b27128-ca50-4d11-bf5a-d21ac5a8d483" />
-<img width="1919" height="979" alt="image" src="https://github.com/user-attachments/assets/df8aab19-fe8c-4ee7-b075-26e1e4f9e0b8" />
-<img width="1919" height="987" alt="image" src="https://github.com/user-attachments/assets/379aa84a-9c0c-4a79-9a82-421c947fbdb3" />
-<img width="1919" height="989" alt="image" src="https://github.com/user-attachments/assets/4933961b-89a5-41ad-a6e8-7705ea59b0e4" />
-<img width="1913" height="969" alt="image" src="https://github.com/user-attachments/assets/a23a82a3-e654-4687-b819-943e53482bb5" />
-<img width="1919" height="972" alt="image" src="https://github.com/user-attachments/assets/ba9f7bb3-fbd3-4003-97c9-9c0ed987adb9" />
+<div style="display: flex; flex-wrap: wrap; gap: 10px;">
+  <img width="48%" alt="image" src="https://github.com/user-attachments/assets/09b27128-ca50-4d11-bf5a-d21ac5a8d483" />
+  <img width="48%" alt="image" src="https://github.com/user-attachments/assets/df8aab19-fe8c-4ee7-b075-26e1e4f9e0b8" />
+  <img width="48%" alt="image" src="https://github.com/user-attachments/assets/379aa84a-9c0c-4a79-9a82-421c947fbdb3" />
+  <img width="48%" alt="image" src="https://github.com/user-attachments/assets/4933961b-89a5-41ad-a6e8-7705ea59b0e4" />
+  <img width="48%" alt="image" src="https://github.com/user-attachments/assets/a23a82a3-e654-4687-b819-943e53482bb5" />
+  <img width="48%" alt="image" src="https://github.com/user-attachments/assets/93b65876-a47e-496a-8da6-292719efb6d6" />
 
-
-
-
-
-
+</div>
 
 
 ## 🛠️ Installation
 
-Make sure you have **Node.js**, **MongoDB**, and **npm** or **yarn** installed.
+Make sure you have **Node.js**, **MongoDB**, and **npm** installed.
 
 ### 1. Clone the Repository
 
